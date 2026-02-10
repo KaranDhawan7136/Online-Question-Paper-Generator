@@ -1,0 +1,26 @@
+text,subject,topic,unit,difficultyLevel,estimatedTime,marks,questionType,options,correctAnswer,bloomsTaxonomy,cloMapping
+"What is the time complexity of binary search?",Data Structures and Algorithms,Searching Algorithms,Unit 2,2,2,1,MCQ,"O(n)|O(log n)|O(n²)|O(1)",O(log n),U,1
+"Which data structure uses LIFO principle?",Data Structures and Algorithms,Stacks,Unit 1,1,1,1,MCQ,"Queue|Stack|Array|Linked List",Stack,R,1
+"What is the worst-case time complexity of QuickSort?",Data Structures and Algorithms,Sorting Algorithms,Unit 3,3,3,1,MCQ,"O(n log n)|O(n²)|O(n)|O(log n)",O(n²),U,2
+"Which traversal visits root node first in a binary tree?",Data Structures and Algorithms,Trees,Unit 4,2,2,1,MCQ,"Inorder|Preorder|Postorder|Level order",Preorder,R,1
+"What is the space complexity of merge sort?",Data Structures and Algorithms,Sorting Algorithms,Unit 3,3,3,1,MCQ,"O(1)|O(log n)|O(n)|O(n²)",O(n),U,2
+"Define a data structure. Explain the difference between linear and non-linear data structures with examples.",Data Structures and Algorithms,Introduction to Data Structures,Unit 1,2,5,2,2 Mark,,,U,1
+"Explain the concept of recursion with a simple example.",Data Structures and Algorithms,Recursion,Unit 2,2,5,2,2 Mark,,,U,2
+"What is a linked list? Differentiate between singly and doubly linked lists.",Data Structures and Algorithms,Linked Lists,Unit 1,2,6,3,3 Mark,,,U,1
+"Explain the BFS algorithm with an example graph.",Data Structures and Algorithms,Graph Algorithms,Unit 5,3,8,3,3 Mark,,,P,3
+"Write an algorithm to reverse a linked list iteratively.",Data Structures and Algorithms,Linked Lists,Unit 1,3,7,3,3 Mark,,,P,2
+"Explain the working of Dijkstra's shortest path algorithm with a suitable example.",Data Structures and Algorithms,Graph Algorithms,Unit 5,4,12,5,5 Mark,,,P,4
+"Compare and contrast different sorting algorithms (Bubble, Selection, Insertion, Merge, Quick) based on time complexity, space complexity, and stability.",Data Structures and Algorithms,Sorting Algorithms,Unit 3,4,15,5,5 Mark,,,E,3
+"Explain AVL trees with rotations. Show how to insert elements 10, 20, 30, 40, 50 into an AVL tree.",Data Structures and Algorithms,Trees,Unit 4,4,15,5,5 Mark,,,P,4
+"Discuss the applications of stacks and queues in real-world scenarios. Implement a queue using two stacks.",Data Structures and Algorithms,Stacks and Queues,Unit 1,3,12,5,5 Mark,,,P,2
+"Explain dynamic programming with the concepts of memoization and tabulation. Solve the 0/1 Knapsack problem using dynamic programming.",Data Structures and Algorithms,Dynamic Programming,Unit 6,5,25,10,10 Mark,,,P,5
+"Discuss B-trees and B+ trees. Explain insertion and deletion operations with examples. Compare their usage in database indexing.",Data Structures and Algorithms,Advanced Trees,Unit 4,5,25,10,10 Mark,,,E,5
+"What is hashing? Explain collision resolution techniques with examples.",Data Structures and Algorithms,Hashing,Unit 3,3,8,3,3 Mark,,,U,3
+"Implement a binary search tree and write functions for insertion, deletion, and search operations.",Data Structures and Algorithms,Trees,Unit 4,4,15,5,5 Mark,,,P,4
+"Explain the concept of greedy algorithms. Solve the activity selection problem using greedy approach.",Data Structures and Algorithms,Greedy Algorithms,Unit 6,3,10,5,5 Mark,,,P,4
+"What is the difference between BFS and DFS? When would you use one over the other?",Data Structures and Algorithms,Graph Algorithms,Unit 5,3,6,3,3 Mark,,,N,3
+"What is a priority queue? How is it implemented using heaps?",Data Structures and Algorithms,Heaps,Unit 2,3,5,2,2 Mark,,,U,2
+"Explain the concept of Big O notation and asymptotic analysis.",Data Structures and Algorithms,Algorithm Analysis,Unit 1,2,5,2,2 Mark,,,U,1
+"What is a circular queue? How does it solve the limitation of a linear queue?",Data Structures and Algorithms,Queues,Unit 1,2,4,2,2 Mark,,,U,1
+"Implement Kruskal's algorithm for finding minimum spanning tree.",Data Structures and Algorithms,Graph Algorithms,Unit 5,4,15,5,5 Mark,,,P,4
+"Explain the divide and conquer paradigm with examples of merge sort and quick sort.",Data Structures and Algorithms,Algorithm Design,Unit 3,4,15,5,5 Mark,,,P,3
