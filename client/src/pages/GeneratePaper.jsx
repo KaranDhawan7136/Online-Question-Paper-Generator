@@ -41,6 +41,7 @@ const defaultConfig = {
 
     // Optional Questions Config (for each section: total questions and how many to attempt)
     optionalConfig: {
+        'MCQ': { totalQuestions: 0, attemptRequired: 0 },
         '2 Mark': { totalQuestions: 0, attemptRequired: 0 },
         '3 Mark': { totalQuestions: 0, attemptRequired: 0 },
         '5 Mark': { totalQuestions: 0, attemptRequired: 0 },
@@ -135,18 +136,28 @@ const GeneratePaper = () => {
             s.toLowerCase().includes(config.subject.toLowerCase())
         );
 
+    // Shared function to calculate total marks using attempt-required counts
+    const calcTotalMarks = (counts, optional) => {
+        const markValues = { 'MCQ': 1, '2 Mark': 2, '3 Mark': 3, '5 Mark': 5, '10 Mark': 10 };
+        return Object.entries(counts).reduce((total, [type, count]) => {
+            // Use attemptRequired if set, otherwise use full count
+            const attempt = (optional[type]?.attemptRequired > 0)
+                ? optional[type].attemptRequired
+                : count;
+            return total + (attempt * (markValues[type] || 0));
+        }, 0);
+    };
+
     // Handle question count change
     const handleQuestionCountChange = (type, count) => {
         const newCounts = { ...config.questionCounts, [type]: parseInt(count) || 0 };
-        setConfig({ ...config, questionCounts: newCounts });
+        const totalMarks = calcTotalMarks(newCounts, config.optionalConfig);
+        setConfig({ ...config, questionCounts: newCounts, totalMarks });
     };
 
-    // Calculate total marks from question counts
+    // Calculate total marks from question counts (for display)
     const getCalculatedMarks = () => {
-        const markValues = { 'MCQ': 1, '2 Mark': 2, '3 Mark': 3, '5 Mark': 5, '10 Mark': 10 };
-        return Object.entries(config.questionCounts).reduce((total, [type, count]) => {
-            return total + (count * (markValues[type] || 0));
-        }, 0);
+        return calcTotalMarks(config.questionCounts, config.optionalConfig);
     };
 
     // Check if any question counts are set
@@ -163,7 +174,8 @@ const GeneratePaper = () => {
                 [field]: parseInt(value) || 0
             }
         };
-        setConfig({ ...config, optionalConfig: newOptional });
+        const totalMarks = calcTotalMarks(config.questionCounts, newOptional);
+        setConfig({ ...config, optionalConfig: newOptional, totalMarks });
     };
 
     // Get display label for question types
@@ -282,15 +294,27 @@ const GeneratePaper = () => {
 
     const handleDownload = async (type) => {
         try {
-            const response = await papersAPI.downloadPDF(preview.paper._id, type);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `${preview.paper.title.replace(/\s/g, '_')}_${type}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            toast.success('PDF downloaded!');
+            if (type === 'summary') {
+                const response = await papersAPI.downloadSummaryExcel(preview.paper._id);
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `${preview.paper.title.replace(/\s/g, '_')}_Summary_Sheet.xlsx`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                toast.success('Summary Excel downloaded!');
+            } else {
+                const response = await papersAPI.downloadPDF(preview.paper._id, type);
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `${preview.paper.title.replace(/\s/g, '_')}_${type}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                toast.success('PDF downloaded!');
+            }
         } catch (error) {
             toast.error('Download failed');
         }
@@ -309,7 +333,7 @@ const GeneratePaper = () => {
                     <div className="actions">
                         <button className="btn btn-secondary" onClick={() => setPreview(null)}>← Back</button>
                         <button className="btn btn-primary" onClick={() => handleDownload('question_paper')}>📄 Download Paper</button>
-                        <button className="btn btn-success" onClick={() => handleDownload('summary')}>📊 Download Summary</button>
+                        <button className="btn btn-success" onClick={() => handleDownload('summary')}>📊 Summary Excel</button>
                     </div>
                 </div>
 
@@ -356,20 +380,28 @@ const GeneratePaper = () => {
                             {['MCQ', '2 Mark', '3 Mark', '5 Mark', '10 Mark'].map(type => {
                                 const questions = preview.questions.filter(q => q.questionType === type);
                                 if (questions.length === 0) return null;
-                                const sectionConfig = {
-                                    MCQ: { name: 'Section-A', note: '(All Questions are Compulsory. Each question carries 01 mark)' },
-                                    '2 Mark': { name: 'Section-B', note: '(Attempt any 5 questions, each question carries 02 marks)' },
-                                    '3 Mark': { name: 'Section-B', note: '(Attempt any 5 questions, each question carries 03 marks)' },
-                                    '5 Mark': { name: 'Section-C', note: '(Attempt any 2 questions, each carries 5 marks)' },
-                                    '10 Mark': { name: 'Section-D', note: '(Attempt any 1 question, each carries 10 marks)' }
-                                };
+                                const totalQ = questions.length;
+                                const markVal = { 'MCQ': 1, '2 Mark': 2, '3 Mark': 3, '5 Mark': 5, '10 Mark': 10 };
+                                const marks = markVal[type] || 0;
+
+                                // Build dynamic section note
+                                let sectionName, sectionNote;
+                                const sectionNames = { 'MCQ': 'Section-A', '2 Mark': 'Section-B', '3 Mark': 'Section-B', '5 Mark': 'Section-C', '10 Mark': 'Section-D' };
+                                sectionName = sectionNames[type] || 'Section';
+                                const attemptReq = config.optionalConfig?.[type]?.attemptRequired;
+                                const attempt = (attemptReq && attemptReq > 0 && attemptReq < totalQ) ? attemptReq : totalQ;
+                                if (attempt < totalQ) {
+                                    sectionNote = `(Attempt any ${attempt} questions, each question carries ${marks.toString().padStart(2, '0')} marks)`;
+                                } else {
+                                    sectionNote = `(All Questions are Compulsory. Each question carries ${marks.toString().padStart(2, '0')} ${marks === 1 ? 'mark' : 'marks'})`;
+                                }
                                 return (
                                     <div key={type} className="paper-section">
                                         <div className="paper-section-title" style={{ textDecoration: 'underline' }}>
-                                            {sectionConfig[type].name}
+                                            {sectionName}
                                         </div>
                                         <div style={{ fontStyle: 'italic', textAlign: 'center', marginBottom: '12px', fontSize: '12px' }}>
-                                            {sectionConfig[type].note}
+                                            {sectionNote}
                                         </div>
                                         {questions.map((q, idx) => (
                                             <div key={q._id} className="paper-question">
@@ -588,7 +620,7 @@ const GeneratePaper = () => {
                                                 onChange={(e) => handleQuestionCountChange(type, e.target.value)}
                                             />
                                         </div>
-                                        {type !== 'MCQ' && config.questionCounts[type] > 0 && (
+                                        {config.questionCounts[type] > 0 && (
                                             <div style={{ marginTop: '8px' }}>
                                                 <label style={{ fontSize: '12px', color: 'var(--gray-500)' }}>Attempt Required</label>
                                                 <input

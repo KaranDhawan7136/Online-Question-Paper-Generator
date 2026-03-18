@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
-import { Doughnut, Bar } from 'react-chartjs-2';
 import { questionsAPI, papersAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import AdminPanel from '../components/AdminPanel';
-
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -41,24 +37,7 @@ const Dashboard = () => {
         );
     }
 
-    const difficultyData = {
-        labels: stats?.byDifficulty?.map(d => d._id) || ['Easy', 'Medium', 'Hard'],
-        datasets: [{
-            data: stats?.byDifficulty?.map(d => d.count) || [0, 0, 0],
-            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-            borderWidth: 0
-        }]
-    };
 
-    const typeData = {
-        labels: stats?.byType?.map(t => t._id) || ['MCQ', 'Short', 'Long'],
-        datasets: [{
-            label: 'Questions',
-            data: stats?.byType?.map(t => t.count) || [0, 0, 0],
-            backgroundColor: ['#818cf8', '#06b6d4', '#f472b6'],
-            borderRadius: 8
-        }]
-    };
 
     return (
         <div>
@@ -106,30 +85,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="charts-grid">
-                <div className="chart-card">
-                    <h3 className="chart-title">Difficulty Distribution</h3>
-                    <div style={{ maxWidth: '300px', margin: '0 auto' }}>
-                        <Doughnut
-                            data={difficultyData}
-                            options={{
-                                plugins: { legend: { position: 'bottom' } },
-                                cutout: '60%'
-                            }}
-                        />
-                    </div>
-                </div>
-                <div className="chart-card">
-                    <h3 className="chart-title">Question Types</h3>
-                    <Bar
-                        data={typeData}
-                        options={{
-                            plugins: { legend: { display: false } },
-                            scales: { y: { beginAtZero: true } }
-                        }}
-                    />
-                </div>
-            </div>
+
 
             <div className="card" style={{ marginTop: '24px' }}>
                 <div className="card-header">

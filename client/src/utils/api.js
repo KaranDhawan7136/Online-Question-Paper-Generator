@@ -60,6 +60,8 @@ export const papersAPI = {
     getById: (id) => api.get(`/papers/${id}`),
     downloadPDF: (id, type = 'question_paper') =>
         api.post(`/papers/${id}/pdf`, { type }, { responseType: 'blob' }),
+    downloadSummaryExcel: (id) =>
+        api.post(`/papers/${id}/summary-excel`, {}, { responseType: 'blob' }),
     delete: (id) => api.delete(`/papers/${id}`)
 };
 
