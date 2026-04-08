@@ -1,0 +1,1136 @@
+Question Bank
+
+Programming Essentials (25COA2106)			BCA 2nd Sem AIML
+
+
+
+There are sections A (1 marks), B (3 marks)  and C (marks).
+
+Section A – 1 Marks Each
+
+
+
+Problem Solving & Algorithms
+
+The phase in which inputs, outputs, and constraints are identified is:(a) Coding (b) Debugging (c) Problem definition (d) Testing
+
+Which of the following best represents an algorithm?(a) Source code (b) Flowchart (c) Executable file (d) Output
+
+Using a solved problem to solve a similar new problem is called:(a) Decomposition (b) Abstraction (c) Pattern recognition (d) Compilation
+
+Breaking a problem into smaller sub-problems is known as:(a) Generalization (b) Decomposition (c) Simulation (d) Debugging
+
+Which strategy focuses on solving a general case rather than a specific input?(a) Trial and error (b) Pattern matching (c) Generalization (d) Testing
+
+The first step before writing any program is:(a) Coding (b) Problem understanding (c) Compilation (d) Execution
+
+A flowchart symbol used for decision making is:(a) Oval (b) Rectangle (c) Diamond (d) Circle
+
+Which of the following is NOT a problem-solving tool?(a) Algorithm (b) Flowchart (c) Compiler (d) Pseudocode
+
+Identifying similarities among problems helps in:(a) Increasing errors (b) Faster problem solving (c) Code duplication (d) Testing only
+
+Which is an example of a well-defined problem?(a) Write a program (b) Display something (c) Find sum of two numbers (d) Improve performance
+
+
+
+Introduction to C, Variables & Data Types 
+
+Which function is the entry point of a C program?(a) start() (b) main() (c) init() (d) begin()
+
+Which header file is required for printf()?(a) <math.h> (b) <stdlib.h> (c) <stdio.h> (d) <string.h>
+
+Which of the following is a valid identifier?(a) 2sum (b) total_marks (c) float (d) sum-total
+
+Which data type occupies the least memory?(a) int (b) float (c) char (d) double
+
+Which keyword is used to declare a constant?(a) final (b) constant (c) const (d) define
+
+Which of the following is NOT a basic data type?(a) int (b) char (c) array (d) float
+
+The size of char data type is:(a) 2 bytes (b) 4 bytes (c) 1 byte (d) Depends on compiler
+
+Which format specifier is used for float?(a) %d (b) %c (c) %f (d) %lf
+
+Which symbol is used to end a statement in C?(a) . (b) : (c) ; (d) ,
+
+Which of the following is NOT a keyword?(a) auto (b) main (c) break (d) continue
+
+Which type of variable can store only 0 or 1?(a) int (b) char (c) _Bool (d) float
+
+Which escape sequence moves the cursor to a new line?(a) \t (b) \n (c) \b (d) \r
+
+Which operator is used to get the address of a variable?(a) * (b) & (c) % (d) #
+
+Which operator is used to access the value at an address?(a) & (b) % (c) * (d) ->
+
+A variable declared but not initialized contains:(a) Zero (b) Garbage value (c) NULL (d) Compiler error
+
+Size of float in C is:
+
+A) 2 bytes
+
+B) 4 bytes
+
+C) 8 bytes
+
+D) Compiler dependent but at least 4 bytes
+
+27 What is printed?
+
+printf("%f", 5);
+
+A) 5.000000
+
+B) 0.000000
+
+C) Compilation error
+
+D) Garbage value
+
+28 What is the output?
+
+printf("%c", 65);
+
+A) 65
+
+B) A
+
+C) Compilation error
+
+D) Garbage
+
+
+
+29 Which format specifier prints a hexadecimal integer?
+
+A) %d
+
+B) %x
+
+C) %o
+
+D) %h
+
+
+
+30 Which one occupies the maximum memory?
+
+A) int
+
+B) float
+
+C) double
+
+D) long double
+
+printf("%d", sizof(int));
+
+
+
+
+
+31 What is the output?
+
+printf("%d", (int)3.9);
+
+A) 3
+
+B) 4
+
+C) Compilation error
+
+D) Garbage
+
+
+
+32 What happens here?
+
+double d = 10.5;
+
+printf("%lf", d);
+
+
+
+A) Compilation error
+
+B) Prints 10.500000
+
+C) Prints garbage
+
+D) Undefined behavior
+
+
+
+33 What is printed?
+
+printf("%f", 5);
+
+A) 5.000000
+
+B) 0.000000
+
+C) Compilation error
+
+D) Garbage value
+
+
+
+34 What happens here?
+
+float x = 10.5;
+
+printf("%d", x);
+
+
+
+A) Prints 10
+
+B) Prints garbage value
+
+C) Compilation error
+
+D) Runtime error
+
+
+
+Operators & Expressions
+
+35 What is the value of x?
+
+int x = 5 > 4 > 3;
+
+A) 1
+
+B) 0
+
+C) 5
+
+D) Compiler error
+
+
+
+36 What is the result?
+
+int x = 10;
+
+int y = x = 5;
+
+printf("%d %d", x, y);
+
+A) 10 5
+
+B) 5 10
+
+C) 5 5
+
+D) Compiler error
+
+
+
+37 Which operator has the highest precedence?
+
+A) *
+
+B) ++
+
+C) =
+
+D) &&
+
+
+
+38 What is the output?
+
+printf("%d", 5 & 3 == 1);
+
+A) 0
+
+B) 1
+
+C) 5
+
+D) 3
+
+
+
+39 What is the value of x?
+
+int x = 10, y = 20;
+
+x += y -= 5;
+
+//x = x + (y = y-5)
+
+A) 5
+
+B) 25
+
+C) 30
+
+D) 35
+
+
+
+40 What is the output?
+
+printf("%d", 1 || 0 && 0);
+
+A) 0
+
+B) 1
+
+C) Compilation error
+
+D) Undefined behavior
+
+
+
+41 What is printed?
+
+int a = 3;
+
+printf("%d", a == 3 ? 10 : 20);
+
+
+
+A) 3
+
+B) 10
+
+C) 20
+
+D) Undefined behavior
+
+
+
+42 What is the output?
+
+printf("%d", 5 ^ 3 & 1);
+
+A) 4
+
+B) 5
+
+C) 6
+
+D) 1
+
+
+
+43 What is the output?
+
+printf("%d", !5 + 2);
+
+A) 2
+
+B) 3
+
+C) 0
+
+D) 1
+
+
+
+44 What is printed?
+
+int a = 1, b = 2, c = 3;
+
+printf("%d", a + b * c == 7);
+
+A) 6
+
+B) 7
+
+C) 1
+
+D) 0
+
+
+
+45 Which statement is true?
+
+A) && has higher precedence than ||
+
+B) = has higher precedence than ==
+
+C) ++ is left associative
+
+D) * has lower precedence than +
+
+Which operator has the highest precedence?(a) + (b) * (c) == (d) &&
+
+What is the result of 10 % 3?(a) 1 (b) 3 (c) 0 (d) 10
+
+Which operator is used for logical AND?(a) & (b) && (c) | (d) ||
+
+Which operator is called ternary operator?(a) ? : (b) ++ (c) == (d) &&
+
+What is the output of: 5 + 2 * 3 ?(a) 21 (b) 11 (c) 15 (d) 7
+
+Relational operators return:(a) int (b) float (c) boolean (d) character
+
+Which operator increments value by 1?(a) += (b) ++ (c) -- (d) ==
+
+The expression (a=b) assigns:(a) b to a (b) a to b (c) comparison (d) error
+
+Which operator checks equality?(a) = (b) == (c) != (d) <=
+
+Which operator is used for bitwise AND?(a) && (b) & (c) | (d) ^
+
+Associativity decides:(a) Order of execution (b) Data type (c) Memory (d) Output format
+
+Which is NOT a logical operator?(a) && (b) || (c) ! (d) &
+
+Which operator has the lowest precedence?(a) * (b) + (c) == (d) =
+
+The result of relational expression is:(a) int (b) float (c) string (d) address
+
+Which operator is used to combine conditions?(a) & (b)|| (c) % (d) ^
+
+
+
+Conditional Statements & Loops (41–60)
+
+61 What is the output?
+
+int x = 5;
+
+if (x = 0)
+
+    printf("A");
+
+else
+
+    printf("B");
+
+A) A
+
+B) B
+
+C) Compilation error
+
+D) Undefined behavior
+
+
+
+62 What is the output?
+
+int i;
+
+for (i = 0; i < 5; i++);
+
+printf("%d", i);
+
+A) 4
+
+B) 5
+
+C) 0
+
+d) infinite loop
+
+
+
+63 What is printed?
+
+int i = 0;
+
+do
+
+    printf("%d", i);
+
+while (i++ < 3);
+
+A) 0123
+
+B) 012
+
+C) 123
+
+D) Infinite loop
+
+
+
+64 How many times does the loop run?
+
+for (int i = 1; i <= 10; i += i)
+
+    printf("X");
+
+A) 3
+
+B) 4
+
+C) 5
+
+d) infinite
+
+
+
+Q65 Predict Output
+
+int i=1;
+
+do{
+
+    printf("%d ", i);
+
+}while(i--);
+
+A) 1
+
+B) 1 0
+
+C) Infinite
+
+D) Nothing
+
+
+
+Q66 Predict Output
+
+int i=0;
+
+for(; ; )
+
+    break;
+
+printf("Done");
+
+
+
+A) Infinite
+
+B) Done
+
+C) Error
+
+D) Nothing
+
+
+
+Q67 Predict Output 
+
+int i=3;
+
+switch(i){
+
+    case 1:
+
+    case 3:
+
+        printf("X");
+
+    case 5:
+
+        printf("Y");
+
+}
+
+A) X
+
+B) Y
+
+C) XY
+
+D) Nothing
+
+
+
+Q68  Predict output
+
+int i=0;
+
+while(i<3){
+
+    printf("%d", i);
+
+    i=i++;
+
+}
+
+A) 012
+
+B) Infinite
+
+C) 0
+
+D) 123
+
+
+
+Q69 Predict output 
+
+for(int i=0;i<5;i++){
+
+    if(i==3) continue;
+
+    printf("%d", i);
+
+}
+
+A) 01234
+
+B) 0124
+
+C) 1234
+
+D) 0123
+
+
+
+Q70 Predict Output
+
+int i;
+
+for(i=0;i<3;i++)
+
+    printf("%d", i);
+
+    printf("X");
+
+
+
+A) 012X
+
+B) 012
+
+C) X
+
+D) Error
+
+
+
+Q71
+
+int i, j;
+
+for(i=0; i<3; i++)
+
+    for(j=0; j<2; j++)
+
+        printf("*");
+
+How many * are printed?
+
+A) 3
+
+B) 5
+
+C) 6
+
+D) 9
+
+
+
+Q72 Predict Output
+
+int i, j;
+
+for(i=0;i<3;i++)
+
+    for(j=0;j<3;j++);
+
+printf("%d", i);
+
+
+
+A) 2
+
+B) 3
+
+C) 9
+
+D) Infinite
+
+
+
+Which statement executes only when condition is true?(a) if (b) for (c) while (d) goto
+
+Which statement executes at least once?(a) for (b) while (c) do-while (d) if
+
+Which statement is used to skip remaining loop body?(a) break (b) continue (c) goto (d) return
+
+Which keyword exits the loop immediately?(a) continue (b) goto (c) break (d) exit
+
+Switch statement works with:(a) float (b) int/char (c) string (d) double
+
+Which is mandatory in switch case?(a) break (b) continue (c) default (d) constant expression
+
+Infinite loop is caused when:(a) Condition never changes (b) break is used (c) continue is used (d) return is used
+
+Which loop is best when iterations are known?(a) for (b) while (c) do-while (d) goto
+
+Nested loop means:(a) Loop without body (b) Loop inside another loop (c) Infinite loop (d) Conditional loop
+
+goto statement is considered:(a) Structured (b) Unnecessary (c) Efficient (d) Mandatory
+
+What happens if semicolon is placed after for loop?(a) Syntax error (b) Infinite loop (c) Loop body empty (d) No effect
+
+Which keyword skips current iteration?(a) break (b) continue (c) goto (d) exit
+
+Which condition always results in true?(a) 0 (b) -1 (c) false (d) NULL
+
+Switch expression must be:(a) constant (b) variable (c) integer type (d) float
+
+Which statement is optional in switch?(a) case (b) break (c) expression (d) switch
+
+Loop control variable should be:(a) constant (b) pointer (c) updated (d) array
+
+Pattern printing mainly uses:(a) if (b) nested loops (c) arrays (d) recursion
+
+Which loop checks condition at the end?(a) for (b) while (c) do-while (d) nested
+
+Jump statements alter:(a) memory (b) data type (c) normal flow (d) output only
+
+Which statement can jump anywhere in program?(a) break (b) continue (c) goto (d) return
+
+
+
+Arrays, Strings
+
+Q92.  Predict Output
+
+int a[5] = {1,2};
+
+printf("%d %d %d", a[2], a[3], a[4]);
+
+A) Garbage values
+
+B) 0 0 0
+
+C) 1 2 0
+
+D) Compilation error
+
+
+
+Q93 	Predict Output
+
+int a[3]={10,20,30};
+
+printf("%d", a[3]);
+
+A) 30
+
+B) 0
+
+C) Compilation error
+
+D) Garbage/Undefined
+
+
+
+Q94  Predict output 
+
+int a[5]={-1,0,2,3,-5};
+
+int count=0;
+
+for(int i=0;i<5;i++)
+
+    if(a[i]) count++;
+
+printf("%d", count);
+
+
+
+A) 2
+
+B) 3
+
+C) 4
+
+D) 5
+
+
+
+Array index starts from:(a) 0 (b) 1 (c) -1 (d) Depends
+
+Which symbol terminates a string?(a) \n (b) \0 (c) EOF (d) NULL
+
+Name of array represents:(a) First element (b) Base address (c) Last element (d) Size
+
+Which function finds string length?(a) strcpy (b) strcmp (c) strlen (d) strcat
+
+Macro is replaced during:(a) Compilation (b) Execution (c) Linking (d) Preprocessing
+
+#define is used for:(a) Variable (b) Function (c) Macro (d) Header
+
+Command line arguments are accessed using:(a) main() only (b) scanf (c) argc & argv (d) getenv
+
+
+
+Section B – 3 Marks Each
+
+Problem Solving & Logic Building
+
+Q0a Given an algorithm to find the largest of three numbers, identify one logical flaw if two numbers are equal and suggest a correction.
+
+Q0b Write the missing steps in an algorithm to reverse a number and explain the logic briefly.
+
+Q1 Write a program where using do-while is mandatory and while loop would fail the logic.
+
+Q2 Match Infinite Loop Scenarios
+
+Column A (Code)
+
+while(1)
+
+for(;;)
+
+do { } while(1);
+
+while(x>0) where x is never decremented
+
+
+
+Column B (Description)
+
+A. Infinite loop using do-while with constant true condition
+
+B. Infinite loop using while with constant true condition
+
+C. Infinite loop due to logical error
+
+D. Infinite loop using for with no conditions
+
+
+
+
+
+Q3 Match the Loop Output Patterns with Loop Code
+
+Column A (code)
+
+Column B (Output Pattern)
+
+for(i=1; i<=5; i++) 
+
+for(i=5; i>=1; i--) 
+
+for(i=1; i<=5; i+=2) 
+
+for(i=2; i<=10; i*=2)
+
+A. 5 4 3 2 1
+
+B. 1 3 5
+
+C. 1 2 3 4 5
+
+D. 2 4 8
+
+
+
+Q4 Match Column A with Column B
+
+Column A (Escape Sequence)
+
+Column B (Meaning / Effect)
+
+a) \n
+
+1) Moves cursor to start of same line
+
+b) \r
+
+2) Produces alert (beep) sound
+
+c) \b
+
+3) Moves cursor to next line
+
+d) \t
+
+4) Moves cursor one position backward
+
+e) \a
+
+5) Horizontal tab space
+
+
+
+Q5 Match the following format specifiers with their use
+
+Column A
+
+Column B
+
+a) %u
+
+1) Octal integer
+
+b) %o
+
+2) Unsigned integer
+
+c) %x
+
+3) Hexadecimal
+
+d) %p
+
+4) Address
+
+Q6 Write the structure of a first C program and explain each part briefly.
+
+Q7 List the basic character set of C with examples.
+
+Q8 Define variables and identifiers. State four rules for naming identifiers.
+
+Q9 Differentiate between int, float, double, and char with size and format specifier.
+
+Q10 Write a C program to read two integers and print their sum using formatted I/O.
+
+Q11 Differentiate between formatted and unformatted I/O with examples.
+
+Q12 Write statements to input:
+
+an integer
+
+a float
+
+a character
+
+Q14 Explain Arithmetic, Relational, and Logical operators with one example each.
+
+Q15 Evaluate the expression using precedence rules:
+
+10 + 5 * 2 > 20 && 4
+
+Q16 Differentiate between pre-increment and post-increment with example.
+
+Q17 Write syntax of if-else and nested if statements.
+
+Q20 Write a program using conditional operator (?:) to find the maximum of two numbers.
+
+Q21 State any three common mistakes in using if statements.
+
+Q22 When should we use switch instead of if-else ladder? Mention two advantages.
+
+Q23 Differentiate between for, while, and do-while loops.
+
+Q24 Explain the purpose of break and continue with example.
+
+Q25 Write a C program to print numbers from 1 to 10 using while loop.
+
+Q26  Write a program to print:
+
+
+
+*
+
+**
+
+***
+
+****
+
+Q27  Declare an integer array of size 5, initialize it with values, and write a loop to print all elements.
+
+Q28  Write a C program to find the sum and average of elements of a 1D array.
+
+Q29 Explain the behavior of the break statement in nested loops with an example. Does it exit from all loops or just the innermost loop? Provide a code snippet to support your answer.
+
+Q30 Explain the purpose of the return statement. Can a function have multiple return statements? Demonstrate with an example.
+
+Q32 Why is the break statement necessary in a switch-case structure? What happens if break is omitted? Explain with an example.
+
+Q33 Differentiate between return and exit() functions in C. When would you use exit() instead of return?
+
+Q34 Discuss the difference between = and == operators
+
+Q35 Can a switch statement be used with float or string variables? Justify your answer.
+
+Q36 Explain the difference between if-else and the conditional (ternary) operator (?:). When should one be preferred over the other?
+
+Q37 What is a "dangling else" problem in C? How does the compiler resolve it?
+
+
+
+
+
+5 Marks Questions
+
+Q1 Write a C program to check whether a given number is prime or not. The program should:
+
+Take input from user
+
+Validate input (only positive integers)
+
+Use appropriate loop structure
+
+Display result with proper message
+
+Q2 Write a C program to generate the Fibonacci series up to n terms. Additionally, calculate and display:
+
+Sum of all Fibonacci numbers generated
+
+Count of even numbers in the series
+
+Count of odd numbers in the series
+
+Q3 Develop a C program to find the factorial of a number using:
+
+a) for loop
+
+b) while loop
+
+Q4 Debug the following code and identify ALL errors (syntax, logical, and runtime). Provide corrected code with explanation:
+
+#include <stdio.h>
+
+
+
+int main() {
+
+    int n, sum = 0, i = 1;
+
+    printf("Enter a number: ");
+
+    scanf("%d", n);
+
+    
+
+    while(i <= n)
+
+        sum += i;
+
+    
+
+    printf("Sum = %d", sum);
+
+    return 0;
+
+}
+
+Q5 Compare the following three approaches to find the sum of first n natural numbers. Analyze their efficiency:
+
+// Approach 1: Using for loop
+
+// Approach 2: Using while loop
+
+// Approach 3: Using formula n*(n+1)/2
+
+Which approach is most efficient and why? Provide complete implementations and comparison table.
+
+Q6  Design a C program to solve the following problem:
+
+ "A parking lot charges Rs. 20 for first hour and Rs. 10 for each additional hour. Calculate parking charges for n vehicles." 
+
+Requirements:
+
+ -Accept number of vehicles
+
+ - For each vehicle, input parking duration in hours
+
+ - Calculate individual charges
+
+ - Display: Total revenue, Average parking time, Vehicle with maximum duration
+
+ - Handle decimal hours (e.g., 2.5 hours)
+
+Q7 Develop a C program for "Digital Root Calculator":
+
+Hint: Digital root is obtained by repeatedly summing digits until single digit remains. Example: 9875 → 9+8+7+5 = 29 → 2+9 = 11 → 1+1 = 2
+
+Program should:
+
+Accept a number
+
+Display step-by-step calculation
+
+Show number of iterations required
+
+Find digital root of all numbers from 1 to user input
+
+Display which numbers have digital root = 9
+
+Q8 List and explain all basic data types in C with size and range
+
+Or 
+
+Explain all basic data types in C with their size, range, and format specifiers. Include examples for each.
+
+Q9 Explain logical operators with truth tables
+
+Q10 Demonstrate infinite loop and how to avoid it
+
+Q11 Convert the following for loop to while
+
+for(i = 1; i <= 10; i++) {
+
+    if(i % 2 == 0)
+
+        continue;
+
+    if(i == 7)
+
+        break;
+
+    printf("%d ", i);
+
+}
+
+…
+
+Q12 List the precedence levels of arithmetic, relational, and logical operators, shift operators in order from highest to lowest.
+
+Q13 Explain formatted and unformatted I/O in C. Provide detailed examples demonstrating scanf() and printf() with various format specifiers and field width specifications.
+
+Q14 Analyze the following code and identify: a) All keywords used in the code b) Any attempt to use keywords as identifiers c) Explain why the code will or won't compile d) Suggest corrections if needed
+
+
+
+#include <stdio.h>
+
+
+
+int main() {
+
+    int int = 10;
+
+    float return = 25.5;
+
+    char for = 'A';
+
+    
+
+    if(int > 5) {
+
+        printf("Value: %d\n", int);
+
+    }
+
+    
+
+    return 0;
+
+}
+
+
+
+Q15 Evaluate the following statements about reserved words in C. For each statement, indicate whether it is TRUE or FALSE and provide justification with examples:
+
+a) All reserved words in C must be written in lowercase 
+
+b) Reserved words can be used as variable names if enclosed in quotes
+
+c) New reserved words can be added by programmers
+
+d) The number of reserved words is the same in all versions of C 
+
+e) Reserved words are case-sensitive in C
+
+Q16 Compare single loops with nested loops. When should you use nested loops? Provide examples where nested loops are essential.
+
+Q17 Though switch is faster than if-else in many cases, it is less flexible." Justify this statement.
+
+Q18 Compare and contrast Nested if-else and the switch statement. Provide scenarios where one is clearly better than the other.
+
+Q19 Define Control Statements. Differentiate between Branching (Decision Making) and Looping statements.
+
+
+

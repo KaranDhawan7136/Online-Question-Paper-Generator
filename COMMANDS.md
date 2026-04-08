@@ -52,7 +52,7 @@ npm run build
 npm run preview
 ```
 
-**Client runs on:** `http://localhost:5173` (default Vite port)
+**Client runs on:** `http://localhost:3000` (configured in `vite.config.js`)
 
 ---
 
@@ -72,13 +72,13 @@ venv\Scripts\activate
 source venv/bin/activate
 
 # Install dependencies (first time only)
-pip install -r requirements.txt
+pip install flask PyPDF2 mammoth reportlab
 
 # Run the AI service
 python app.py
 ```
 
-**AI Service runs on:** `http://localhost:5001` (default)
+**AI Service runs on:** `http://localhost:8000` (default)
 
 ---
 
@@ -112,6 +112,7 @@ Make sure to set up `.env` files in the `server` directory with required variabl
 - `MONGODB_URI` - MongoDB connection string
 - `JWT_SECRET` - Secret key for JWT tokens
 - `PORT` - Server port (default: 5000)
+- `AI_SERVICE_URL` - Python AI service URL (default: `http://localhost:8000`)
 
 ---
 
@@ -121,4 +122,5 @@ Make sure to set up `.env` files in the `server` directory with required variabl
 |-------|----------|
 | Port already in use | Kill the process using the port or change the port in config |
 | MongoDB connection failed | Ensure MongoDB is running and URI is correct |
-| Module not found | Run `npm install` or `pip install -r requirements.txt` |
+| Module not found | Run `npm install` in server/client, or `pip install flask PyPDF2 mammoth reportlab` in ai_service |
+| CHO upload fails with "Python AI Service is not running" | Make sure `python app.py` is running in the `ai_service` directory |

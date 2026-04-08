@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { papersAPI, questionsAPI } from '../utils/api';
+import { papersAPI, questionsAPI, syllabusAPI } from '../utils/api';
 import toast from 'react-hot-toast';
 
 // Default config
@@ -77,6 +77,7 @@ const GeneratePaper = () => {
     const [availableSubjects, setAvailableSubjects] = useState([]);
     const [showSubjectDropdown, setShowSubjectDropdown] = useState(false);
     const [subjectStats, setSubjectStats] = useState({});
+    const [choData, setChoData] = useState(null); // User's CHO for the selected subject
     const isFirstRender = useRef(true);
 
     // Initialize config from localStorage
@@ -112,7 +113,7 @@ const GeneratePaper = () => {
                 try {
                     const res = await questionsAPI.getAll({ subject: config.subject, limit: 1000 });
                     const questions = res.data.questions || [];
-                    const topics = [...new Set(questions.map(q => q.topic).filter(Boolean))];
+                    const topics = [...new Set(questions.flatMap(q => Array.isArray(q.topic) ? q.topic : [q.topic]).filter(Boolean))];
                     setAvailableTopics(topics);
 
                     // Calculate available questions per type
@@ -124,6 +125,16 @@ const GeneratePaper = () => {
                 } catch (error) {
                     console.error('Failed to fetch topics');
                 }
+
+                // Fetch user's CHO for this subject
+                try {
+                    const choRes = await syllabusAPI.getBySubject(config.subject);
+                    setChoData(choRes.data);
+                } catch (error) {
+                    setChoData(null); // No CHO for this subject
+                }
+            } else {
+                setChoData(null);
             }
         };
         fetchTopicsAndStats();
@@ -148,16 +159,33 @@ const GeneratePaper = () => {
         }, 0);
     };
 
+    // Calculate duration from required questions (minutes per question type)
+    const calcDuration = (counts, optional) => {
+        const timePerQuestion = { 'MCQ': 1, '2 Mark': 3, '3 Mark': 5, '5 Mark': 8, '10 Mark': 15 };
+        return Object.entries(counts).reduce((total, [type, count]) => {
+            const attempt = (optional[type]?.attemptRequired > 0)
+                ? optional[type].attemptRequired
+                : count;
+            return total + (attempt * (timePerQuestion[type] || 2));
+        }, 0);
+    };
+
     // Handle question count change
     const handleQuestionCountChange = (type, count) => {
         const newCounts = { ...config.questionCounts, [type]: parseInt(count) || 0 };
         const totalMarks = calcTotalMarks(newCounts, config.optionalConfig);
-        setConfig({ ...config, questionCounts: newCounts, totalMarks });
+        const duration = calcDuration(newCounts, config.optionalConfig);
+        setConfig({ ...config, questionCounts: newCounts, totalMarks, duration });
     };
 
     // Calculate total marks from question counts (for display)
     const getCalculatedMarks = () => {
         return calcTotalMarks(config.questionCounts, config.optionalConfig);
+    };
+
+    // Calculate duration from question counts (for display)
+    const getCalculatedDuration = () => {
+        return calcDuration(config.questionCounts, config.optionalConfig);
     };
 
     // Check if any question counts are set
@@ -175,7 +203,8 @@ const GeneratePaper = () => {
             }
         };
         const totalMarks = calcTotalMarks(config.questionCounts, newOptional);
-        setConfig({ ...config, optionalConfig: newOptional, totalMarks });
+        const duration = calcDuration(config.questionCounts, newOptional);
+        setConfig({ ...config, optionalConfig: newOptional, totalMarks, duration });
     };
 
     // Get display label for question types
@@ -397,7 +426,7 @@ const GeneratePaper = () => {
                                 }
                                 return (
                                     <div key={type} className="paper-section">
-                                        <div className="paper-section-title" style={{ textDecoration: 'underline' }}>
+                                        <div className="paper-section-title" style={{ textDecoration: 'underline', textAlign: 'center' }}>
                                             {sectionName}
                                         </div>
                                         <div style={{ fontStyle: 'italic', textAlign: 'center', marginBottom: '12px', fontSize: '12px' }}>
@@ -425,17 +454,38 @@ const GeneratePaper = () => {
                         <div className="card" style={{ marginBottom: '16px' }}>
                             <h3 className="card-title" style={{ marginBottom: '16px' }}>Analytics Summary</h3>
                             <div style={{ marginBottom: '12px' }}>
-                                <strong>Total Questions:</strong> {preview.analytics.totalQuestions}
+                                <strong>Total Questions (in paper):</strong> {preview.questions.length}
                             </div>
                             <div style={{ marginBottom: '12px' }}>
-                                <strong>Total Marks:</strong> {preview.analytics.totalMarks}
+                                <strong>Total Marks (required):</strong>{' '}
+                                <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--primary)' }}>
+                                    {preview.paper.totalMarks}
+                                </span>
+                            </div>
+                            {/* Show per-section breakdown */}
+                            <div style={{ marginBottom: '12px' }}>
+                                <strong>Section Breakdown:</strong>
+                                {['MCQ', '2 Mark', '3 Mark', '5 Mark', '10 Mark'].map(type => {
+                                    const qs = preview.questions.filter(q => q.questionType === type);
+                                    if (qs.length === 0) return null;
+                                    const markVal = { 'MCQ': 1, '2 Mark': 2, '3 Mark': 3, '5 Mark': 5, '10 Mark': 10 };
+                                    const marks = markVal[type] || 0;
+                                    const attemptReq = config.optionalConfig?.[type]?.attemptRequired;
+                                    const attempt = (attemptReq && attemptReq > 0 && attemptReq < qs.length) ? attemptReq : qs.length;
+                                    return (
+                                        <div key={type} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '13px' }}>
+                                            <span>{type === 'MCQ' ? 'MCQ (1M)' : type}</span>
+                                            <span>{attempt}{attempt < qs.length ? ` of ${qs.length}` : ''} × {marks} = <strong>{attempt * marks}</strong></span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                             <div style={{ marginBottom: '12px' }}>
-                                <strong>Estimated Time:</strong> {preview.analytics.estimatedTime || 'N/A'} min
+                                <strong>Estimated Time:</strong> {preview.analytics?.estimatedTime || 'N/A'} min
                             </div>
                             <div style={{ marginBottom: '16px' }}>
                                 <strong>Difficulty Breakdown:</strong>
-                                {Object.entries(preview.analytics.difficultyDistribution?.counts || {}).map(([diff, count]) => (
+                                {Object.entries(preview.analytics?.difficultyDistribution?.counts || {}).map(([diff, count]) => (
                                     <div key={diff} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
                                         <span>Level {diff}</span>
                                         <span>{count} questions</span>
@@ -444,7 +494,7 @@ const GeneratePaper = () => {
                             </div>
                             <div>
                                 <strong>Topic Coverage:</strong>
-                                {Object.entries(preview.analytics.topicDistribution?.counts || {}).map(([topic, count]) => (
+                                {Object.entries(preview.analytics?.topicDistribution?.counts || {}).map(([topic, count]) => (
                                     <div key={topic} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
                                         <span>{topic}</span>
                                         <span>{count} questions</span>
@@ -682,6 +732,84 @@ const GeneratePaper = () => {
                     )}
 
 
+                    {/* CHO / CLO Mapping Info */}
+                    {choData && choData.mappings && choData.mappings.length > 0 && (
+                        <>
+                            <h3 style={{ marginTop: '24px', marginBottom: '16px', color: 'var(--primary)' }}>
+                                🎯 CLO Mapping (from your CHO)
+                            </h3>
+                            <div className="card" style={{
+                                background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(139,92,246,0.06))',
+                                border: '1px solid rgba(99,102,241,0.2)',
+                                marginBottom: '16px'
+                            }}>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+                                    <span style={{ fontSize: '22px' }}>📋</span>
+                                    <div>
+                                        <div style={{ fontWeight: '600', fontSize: '14px', color: 'var(--gray-800)' }}>
+                                            Course Handout: {choData.subject}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: 'var(--gray-500)' }}>
+                                            {choData.mappings.length} topic mappings found — questions will be aligned to your CLOs
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {(() => {
+                                        // Group mappings by CLO
+                                        const cloGroups = {};
+                                        choData.mappings.forEach(m => {
+                                            const clo = m.cloMapping || 1;
+                                            if (!cloGroups[clo]) cloGroups[clo] = [];
+                                            cloGroups[clo].push(m.topic);
+                                        });
+                                        return Object.entries(cloGroups).sort(([a], [b]) => a - b).map(([clo, topics]) => (
+                                            <div key={clo} style={{
+                                                background: 'white',
+                                                border: '1px solid rgba(99,102,241,0.2)',
+                                                borderRadius: '10px',
+                                                padding: '12px 16px',
+                                                minWidth: '140px',
+                                                flex: '1'
+                                            }}>
+                                                <div style={{
+                                                    fontWeight: '700',
+                                                    color: 'var(--primary)',
+                                                    fontSize: '15px',
+                                                    marginBottom: '6px'
+                                                }}>
+                                                    CLO {clo}
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: 'var(--gray-500)', marginBottom: '4px' }}>
+                                                    {topics.length} topic{topics.length !== 1 ? 's' : ''}
+                                                </div>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                    {topics.slice(0, 3).map((t, i) => (
+                                                        <span key={i} style={{
+                                                            background: 'rgba(99,102,241,0.08)',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            fontSize: '11px',
+                                                            color: 'var(--gray-600)'
+                                                        }}>{t}</span>
+                                                    ))}
+                                                    {topics.length > 3 && (
+                                                        <span style={{
+                                                            padding: '2px 8px',
+                                                            fontSize: '11px',
+                                                            color: 'var(--gray-400)'
+                                                        }}>+{topics.length - 3} more</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+
                     {/* Unit Configuration Section */}
                     {availableTopics.length > 0 && (
                         <>
@@ -790,14 +918,39 @@ const GeneratePaper = () => {
                     <h3 style={{ marginTop: '24px', marginBottom: '16px', color: 'var(--primary)' }}>⚙️ Paper Configuration</h3>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label className="form-label">Total Marks *</label>
-                            <input type="number" className="form-input" min="10" max="200" value={config.totalMarks}
-                                onChange={(e) => setConfig({ ...config, totalMarks: parseInt(e.target.value) })} required />
+                            <label className="form-label">Total Marks <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '500' }}>(auto-calculated)</span></label>
+                            <div style={{ position: 'relative' }}>
+                                <input type="number" className="form-input" value={getCalculatedMarks() || config.totalMarks}
+                                    readOnly
+                                    style={{ fontWeight: '700', fontSize: '18px', color: 'var(--primary)', background: 'var(--gray-50)', cursor: 'default' }} />
+                                {hasQuestionCounts() && (
+                                    <span style={{
+                                        position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                                        fontSize: '11px', background: 'var(--success)', color: '#fff',
+                                        padding: '2px 8px', borderRadius: '10px', fontWeight: '600'
+                                    }}>✓ Calculated</span>
+                                )}
+                            </div>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Duration (minutes) *</label>
+                            <label className="form-label">Duration (minutes) * <span style={{ fontSize: '11px', color: 'var(--gray-500)', fontWeight: '400' }}>for question paper</span></label>
                             <input type="number" className="form-input" min="30" max="300" value={config.duration}
-                                onChange={(e) => setConfig({ ...config, duration: parseInt(e.target.value) })} required />
+                                onChange={(e) => setConfig({ ...config, duration: parseInt(e.target.value) || 90 })} required />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Estimated Duration <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '500' }}>(auto-calculated, for summary)</span></label>
+                            <div style={{ position: 'relative' }}>
+                                <input type="number" className="form-input" value={getCalculatedDuration() || 0}
+                                    readOnly
+                                    style={{ fontWeight: '700', fontSize: '18px', color: 'var(--primary)', background: 'var(--gray-50)', cursor: 'default' }} />
+                                {hasQuestionCounts() && (
+                                    <span style={{
+                                        position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                                        fontSize: '11px', background: 'var(--success)', color: '#fff',
+                                        padding: '2px 8px', borderRadius: '10px', fontWeight: '600'
+                                    }}>✓ Calculated</span>
+                                )}
+                            </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Total Pages</label>

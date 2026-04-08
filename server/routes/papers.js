@@ -38,7 +38,7 @@ router.post('/generate', auth, async (req, res) => {
         } = req.body;
 
         // Fetch questions from DB based on subject and question types
-        const filter = { subject: new RegExp(subject, 'i') };
+        const filter = { subject: { $in: [new RegExp(subject, 'i')] } };
         if (questionTypes && questionTypes.length > 0) {
             filter.questionType = { $in: questionTypes };
         }
@@ -49,19 +49,81 @@ router.post('/generate', auth, async (req, res) => {
             return res.status(400).json({ error: 'No questions available for the given criteria' });
         }
 
-        // Call Python service for intelligent selection with unitConfig and questionCounts
-        const pythonResponse = await axios.post(`${process.env.PYTHON_SERVICE_URL}/generate`, {
-            questions: availableQuestions,
-            config: {
-                totalMarks,
-                difficultyDistribution: difficultyDistribution || { 1: 20, 2: 30, 3: 30, 4: 15, 5: 5 },
-                questionTypes: questionTypes || ['MCQ', '3 Mark', '5 Mark'],
-                questionCounts: questionCounts || {}, // Pass exact question counts
-                unitConfig: unitConfig || [] // Pass unit configuration for weighted selection
-            }
-        });
+        let selectedQuestions = [];
+        let analytics = {};
 
-        const selectedQuestions = pythonResponse.data.selected_questions;
+        // Try Python service first, fallback to Node.js selection
+        try {
+            const pythonResponse = await axios.post(`${process.env.PYTHON_SERVICE_URL}/generate`, {
+                questions: availableQuestions,
+                config: {
+                    totalMarks,
+                    difficultyDistribution: difficultyDistribution || { 1: 20, 2: 30, 3: 30, 4: 15, 5: 5 },
+                    questionTypes: questionTypes || ['MCQ', '3 Mark', '5 Mark'],
+                    questionCounts: questionCounts || {},
+                    unitConfig: unitConfig || []
+                }
+            }, { timeout: 15000 });
+
+            selectedQuestions = pythonResponse.data.selected_questions;
+            analytics = pythonResponse.data.analytics || {};
+        } catch (pyErr) {
+            console.log('Python service unavailable, using Node.js fallback:', pyErr.message);
+
+            // Node.js fallback: select questions by type and count
+            const counts = questionCounts || {};
+            const questionsArr = availableQuestions.map(q => q.toObject());
+
+            // Group questions by type
+            const byType = {};
+            questionsArr.forEach(q => {
+                const type = q.questionType || 'MCQ';
+                if (!byType[type]) byType[type] = [];
+                byType[type].push(q);
+            });
+
+            // Shuffle helper
+            const shuffle = (arr) => {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            };
+
+            // Select the required number of each type
+            for (const [type, count] of Object.entries(counts)) {
+                if (count <= 0) continue;
+                const pool = byType[type] || [];
+                const shuffled = shuffle(pool);
+                const selected = shuffled.slice(0, count);
+                selectedQuestions.push(...selected);
+            }
+
+            // If no specific counts, just select randomly up to totalMarks
+            if (selectedQuestions.length === 0) {
+                const shuffled = shuffle(questionsArr);
+                let currentMarks = 0;
+                for (const q of shuffled) {
+                    if (currentMarks + (q.marks || 1) <= (totalMarks || 40)) {
+                        selectedQuestions.push(q);
+                        currentMarks += (q.marks || 1);
+                    }
+                }
+            }
+
+            analytics = {
+                method: 'node-fallback',
+                totalSelected: selectedQuestions.length,
+                byType: {}
+            };
+            selectedQuestions.forEach(q => {
+                const t = q.questionType || 'MCQ';
+                analytics.byType[t] = (analytics.byType[t] || 0) + 1;
+            });
+        }
+
         const questionIds = selectedQuestions.map(q => q._id);
 
         // Save paper to database with all new fields
@@ -106,7 +168,7 @@ router.post('/generate', auth, async (req, res) => {
                 ...paper.toObject(),
                 questionsData: selectedQuestions
             },
-            analytics: pythonResponse.data.analytics
+            analytics
         });
     } catch (error) {
         console.error('Paper generation error:', error.message);
@@ -117,8 +179,11 @@ router.post('/generate', auth, async (req, res) => {
 // Get all papers
 router.get('/', auth, async (req, res) => {
     try {
-        const papers = await Paper.find({ createdBy: req.user._id })
+        // Admin sees all papers; regular users see only their own
+        const filter = req.user.role === 'admin' ? {} : { createdBy: req.user._id };
+        const papers = await Paper.find(filter)
             .populate('questions')
+            .populate('createdBy', 'name memberId')
             .sort({ createdAt: -1 });
         res.json(papers);
     } catch (error) {

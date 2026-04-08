@@ -1,0 +1,144 @@
+{
+  "subject": "Programming Essentials",
+  "clo_definitions": {
+    "CLO01": "Elucidate the basic knowledge of Algorithms and Problem Analysis.",
+    "CLO02": "Apply programming constructs of C language to solve the real-world problems.",
+    "CLO03": "Explore user-defined data structures like arrays, structures and pointers in implementing solutions to problems.",
+    "CLO04": "Design and Develop Solutions to problems using modular programming constructs such as functions and procedures.",
+    "CLO05": "Integrate Artificial intelligence in C Programming Language"
+  },
+  "mappings": [
+    {
+      "topic": "Conditional Statements: If statement, if-else statement, if statement mistakes, nested if statements, Conditional Operator, Switch statement",
+      "unit": "Unit 1",
+      "lectureNumber": "11-14",
+      "cloMapping": 2,
+      "cloId": "CLO02",
+      "allCLOs": [
+        "CLO02"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "More on Loops: Nested for loops, Printing patterns with loops",
+      "unit": "Unit 2",
+      "lectureNumber": "17",
+      "cloMapping": 2,
+      "cloId": "CLO02",
+      "allCLOs": [
+        "CLO02"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "Arrays Concept introduction, 1 D array: declaration, initialization, Traversal, input/output operation, problem solving",
+      "unit": "Unit 2",
+      "lectureNumber": "18-19",
+      "cloMapping": 3,
+      "cloId": "CLO03",
+      "allCLOs": [
+        "CLO03"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "2 D array: Declaration, Initialization, traversal, input/output operation, Matrix Addition and Transpose",
+      "unit": "Unit 2",
+      "lectureNumber": "20-21",
+      "cloMapping": 3,
+      "cloId": "CLO03",
+      "allCLOs": [
+        "CLO03"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "String Working and manipulation of strings using user defined code and intrinsic functions",
+      "unit": "Unit 2",
+      "lectureNumber": "22-23",
+      "cloMapping": 3,
+      "cloId": "CLO03",
+      "allCLOs": [
+        "CLO03"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "Functions: Definition of a Function, Types \u2013 Library and User Defined Functions. Function declarations, Function Definition, Arguments, Function call (call by value and reference, Recursion",
+      "unit": "Unit 2",
+      "lectureNumber": "27-29",
+      "cloMapping": 4,
+      "cloId": "CLO04",
+      "allCLOs": [
+        "CLO04"
+      ],
+      "description": "Storage Classes: Storage classes- auto, extern, static and register"
+    },
+    {
+      "topic": "Storage Classes: Storage classes- auto, extern, static and register",
+      "unit": "Unit 3",
+      "lectureNumber": "30",
+      "cloMapping": 4,
+      "cloId": "CLO04",
+      "allCLOs": [
+        "CLO04"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "User Defined Data Types Structures and Unions: Declaring & initializing structures, Array of structures, Nested Structures, Pointers and structures,. Difference between Structure and union",
+      "unit": "Unit 3",
+      "lectureNumber": "31-32",
+      "cloMapping": 2,
+      "cloId": "CLO02",
+      "allCLOs": [
+        "CLO02"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "Brief introduction about self-referential structures, Typdef, enumerated,",
+      "unit": "Unit 3",
+      "lectureNumber": "33-34",
+      "cloMapping": 3,
+      "cloId": "CLO03",
+      "allCLOs": [
+        "CLO03"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "Dynamic Memory Allocation: Memory Management Functions\u2014using malloc(), calloc(), realloc(), and free() from <stdlib.h>",
+      "unit": "Unit 3",
+      "lectureNumber": "35-36",
+      "cloMapping": 2,
+      "cloId": "CLO02",
+      "allCLOs": [
+        "CLO02"
+      ],
+      "description": ""
+    },
+    {
+      "topic": "Preprocessor Directives\u2014#include, #define, macros, Command Line",
+      "unit": "Unit 3",
+      "lectureNumber": "37",
+      "cloMapping": 1,
+      "cloId": "CLO01",
+      "allCLOs": [],
+      "description": "CLL02"
+    },
+    {
+      "topic": "File Handling and its Operations: Introduction to Files, Their Importance and Need, Steps in processing a file, File opening modes, Input and output operations of text files, Direct/Random Access functions (fseek, ftell, rewind).",
+      "unit": "Unit 3",
+      "lectureNumber": "38-40",
+      "cloMapping": 5,
+      "cloId": "CLO05",
+      "allCLOs": [
+        "CLO05"
+      ],
+      "description": ""
+    }
+  ],
+  "totalTopics": 12,
+  "totalLectures": 69
+}

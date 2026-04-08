@@ -47,7 +47,19 @@ export const questionsAPI = {
     create: (data) => api.post('/questions', data),
     update: (id, data) => api.put(`/questions/${id}`, data),
     delete: (id) => api.delete(`/questions/${id}`),
+    bulkDelete: (ids) => api.post('/questions/bulk-delete', { ids }),
+    deleteBySubject: (subject) => api.delete(`/questions/by-subject/${encodeURIComponent(subject)}`),
     uploadCSV: (formData) => api.post('/questions/upload-csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    uploadWord: (formData) => api.post('/questions/upload-word', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    uploadQBank: (formData) => api.post('/questions/upload-qbank', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000
+    }),
+    uploadImage: (formData) => api.post('/questions/upload-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     }),
     getStats: () => api.get('/questions/stats/overview')
@@ -72,6 +84,20 @@ export const adminAPI = {
     rejectUser: (id) => api.delete(`/admin/users/${id}/reject`),
     getAccessCode: () => api.get('/admin/config/access-code'),
     updateAccessCode: (code) => api.put('/admin/config/access-code', { accessCode: code })
+};
+
+// Syllabus Maps APIs
+export const syllabusAPI = {
+    getAll: () => api.get('/syllabus'),
+    getBySubject: (subject) => api.get(`/syllabus/${subject}`),
+    uploadCSV: (formData) => api.post('/syllabus/upload-csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    uploadCHO: (formData) => api.post('/syllabus/upload-cho', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000
+    }),
+    delete: (id) => api.delete(`/syllabus/${id}`)
 };
 
 export default api;

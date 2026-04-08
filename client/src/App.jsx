@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import QuestionBank from './pages/QuestionBank';
 import GeneratePaper from './pages/GeneratePaper';
 import Papers from './pages/Papers';
+import SyllabusMaps from './pages/SyllabusMaps';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -44,6 +45,7 @@ function App() {
                         <Route path="questions" element={<QuestionBank />} />
                         <Route path="generate" element={<GeneratePaper />} />
                         <Route path="papers" element={<Papers />} />
+                        <Route path="syllabus-maps" element={<SyllabusMaps />} />
                     </Route>
                 </Routes>
             </BrowserRouter>

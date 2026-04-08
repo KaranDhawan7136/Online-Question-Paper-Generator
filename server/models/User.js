@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema({
         enum: ['admin', 'faculty'],
         default: 'faculty'
     },
+    memberId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     isApproved: {
         type: Boolean,
         default: false
@@ -32,10 +37,18 @@ const userSchema = new mongoose.Schema({
     resetTokenExpiry: Date
 }, { timestamps: true });
 
-// Hash password before saving
+// Auto-generate memberId before saving (if not set)
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 10);
+    // Generate memberId for new users
+    if (!this.memberId) {
+        const count = await mongoose.model('User').countDocuments();
+        this.memberId = `MEM-${String(count + 1).padStart(3, '0')}`;
+    }
+
+    // Hash password before saving
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
     next();
 });
 

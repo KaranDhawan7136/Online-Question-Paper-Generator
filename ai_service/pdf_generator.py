@@ -7,6 +7,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
 from collections import defaultdict
 import io
 import os
+import requests
+import tempfile
 
 class PDFGenerator:
     """
@@ -14,8 +16,12 @@ class PDFGenerator:
     Formats papers like university examination papers with logo and proper headers.
     """
     
+    # Base URL for downloading question images from the Node.js server
+    SERVER_BASE_URL = os.environ.get('NODE_SERVER_URL', 'http://localhost:5000')
+    
     def __init__(self, paper):
         self.paper = paper
+        self._temp_files = []  # Track temp files for cleanup
         # University/Institution Details
         self.university_name = paper.get('universityName', 'University Name')
         self.logo_path = paper.get('logoPath', None)
@@ -40,6 +46,45 @@ class PDFGenerator:
         
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
+    
+    def _download_image(self, image_path, max_width=4*inch, max_height=2.5*inch):
+        """Download an image from the server and return a ReportLab Image element."""
+        if not image_path:
+            return None
+        try:
+            # Build full URL from relative path
+            url = f"{self.SERVER_BASE_URL}{image_path}"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            
+            # Save to temp file (ReportLab needs a file path or file-like object)
+            suffix = os.path.splitext(image_path)[1] or '.png'
+            temp_fd, temp_path = tempfile.mkstemp(suffix=suffix)
+            os.write(temp_fd, response.content)
+            os.close(temp_fd)
+            self._temp_files.append(temp_path)
+            
+            # Create Image element with constrained dimensions
+            img = Image(temp_path)
+            # Scale to fit within max dimensions while preserving aspect ratio
+            iw, ih = img.drawWidth, img.drawHeight
+            if iw > 0 and ih > 0:
+                ratio = min(max_width / iw, max_height / ih, 1.0)
+                img.drawWidth = iw * ratio
+                img.drawHeight = ih * ratio
+            return img
+        except Exception as e:
+            print(f"Warning: Could not load image {image_path}: {e}")
+            return None
+    
+    def _cleanup_temp_files(self):
+        """Remove temporary image files."""
+        for path in self._temp_files:
+            try:
+                os.unlink(path)
+            except:
+                pass
+        self._temp_files = []
     
     def _setup_custom_styles(self):
         """Setup custom paragraph styles."""
@@ -265,19 +310,53 @@ class PDFGenerator:
                         self.styles['QuestionText']
                     ))
                     
+                    # Add question image if present
+                    q_image = q.get('image', '')
+                    if q_image:
+                        img_element = self._download_image(q_image, max_width=4*inch, max_height=2.5*inch)
+                        if img_element:
+                            elements.append(Spacer(1, 4))
+                            elements.append(img_element)
+                            elements.append(Spacer(1, 4))
+                    
                     # Add options for MCQ in 2x2 grid
                     if qtype == 'MCQ' and q.get('options'):
                         options = q.get('options', [])
+                        option_images = q.get('optionImages', [])
                         # Pad options to at least 4 if needed
                         while len(options) < 4:
                             options.append("")
+                        while len(option_images) < len(options):
+                            option_images.append("")
                             
                         # Format options with roman numerals
                         labels = ['(i)', '(ii)', '(iii)', '(iv)']
                         formatted_options = []
-                        for i in range(len(options)):
-                            if i < 4:
-                                formatted_options.append(Paragraph(f"<b>{labels[i]}</b> {options[i]}", self.styles['OptionCell']))
+                        for i in range(min(len(options), 4)):
+                            opt_content = []
+                            opt_text = Paragraph(f"<b>{labels[i]}</b> {options[i]}", self.styles['OptionCell'])
+                            opt_content.append(opt_text)
+                            
+                            # Add option image if present
+                            if i < len(option_images) and option_images[i]:
+                                opt_img = self._download_image(option_images[i], max_width=1.8*inch, max_height=1.2*inch)
+                                if opt_img:
+                                    opt_content.append(Spacer(1, 2))
+                                    opt_content.append(opt_img)
+                            
+                            # Wrap in a mini table if there's an image, otherwise just the paragraph
+                            if len(opt_content) > 1:
+                                mini_table = Table([[item] for item in opt_content], colWidths=[220])
+                                mini_table.setStyle(TableStyle([
+                                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                                    ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                                    ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+                                    ('TOPPADDING', (0, 0), (-1, -1), 0),
+                                    ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+                                ]))
+                                formatted_options.append(mini_table)
+                            else:
+                                formatted_options.append(opt_text)
                         
                         # Create 2x2 grid data
                         if len(formatted_options) >= 4:
@@ -306,6 +385,7 @@ class PDFGenerator:
                 elements.append(Spacer(1, 10))
         
         doc.build(elements)
+        self._cleanup_temp_files()
         buffer.seek(0)
         return buffer
     
