@@ -27,6 +27,13 @@ const syllabusMapSchema = new mongoose.Schema({
             max: 5
         }
     }],
+    // CLO definitions extracted from the CHO document
+    // e.g. { "CLO01": "Elucidate the basic knowledge...", "CLO02": "Apply programming constructs..." }
+    cloDefinitions: {
+        type: Map,
+        of: String,
+        default: {}
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

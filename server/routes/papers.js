@@ -3,6 +3,7 @@ const axios = require('axios');
 const ExcelJS = require('exceljs');
 const Question = require('../models/Question');
 const Paper = require('../models/Paper');
+const SyllabusMap = require('../models/SyllabusMap');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -243,6 +244,22 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
 
         const questions = paper.questions || [];
 
+        // Fetch CLO definitions from the SyllabusMap (CHO) for this paper's subject
+        let cloDefinitions = {};
+        try {
+            const syllabusMap = await SyllabusMap.findOne({
+                subject: new RegExp(`^${paper.subject}$`, 'i')
+            });
+            if (syllabusMap && syllabusMap.cloDefinitions) {
+                // Convert Mongoose Map to plain object
+                cloDefinitions = syllabusMap.cloDefinitions instanceof Map
+                    ? Object.fromEntries(syllabusMap.cloDefinitions)
+                    : syllabusMap.cloDefinitions;
+            }
+        } catch (e) {
+            console.log('Could not fetch CLO definitions:', e.message);
+        }
+
         // Group questions by section
         const sectionMap = {
             'MCQ': 'SECTION-A',
@@ -268,7 +285,6 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
             E: 'Judge, Rate, Validate, Predict, Assess, score, infer, determine, prioritize, tell why, evaluate',
             C: 'Compose, Assemble, Organize, Invent, compile, forecast, devise, construct, plan, integrate, design'
         };
-        const diffLabels = { 1: 'Very Easy', 2: 'Easy', 3: 'Moderate', 4: 'Hard', 5: 'Very Hard' };
 
         // Create workbook
         const workbook = new ExcelJS.Workbook();
@@ -280,7 +296,6 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
         });
 
         // --- Styles ---
-        const headerFont = { name: 'Calibri', size: 14, bold: true };
         const normalFont = { name: 'Calibri', size: 11 };
         const boldFont = { name: 'Calibri', size: 11, bold: true };
         const thinBorder = {
@@ -345,8 +360,8 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
         ws.mergeCells('D4:O4');
         ws.getCell('D4').value = paper.courseTitle || paper.subject || '';
         ws.getCell('D4').font = normalFont;
-        ws.getCell('Q4').value = paper.title || '';
-        ws.getCell('Q4').font = normalFont;
+        ws.getCell('Q4').value = `ST: ${(paper.title || '').replace(/sessional\s*test\s*-?\s*/i, '')}`;
+        ws.getCell('Q4').font = boldFont;
 
         // ============================================================
         // ROW 5: Total lectures
@@ -357,23 +372,61 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
 
         // ============================================================
         // ROW 6: Column Headers for Question Table
+        // (Matching reference: D6:H6 merged, J6:N6 merged)
         // ============================================================
         const headerRow = 6;
-        const headers = {
-            A: '', B: 'Question\nnumber', C: 'Lecture\nnumber',
-            D: 'Difficulty Level\n1', E: '2', F: '3', G: '4', H: '5',
-            I: "Bloom's\nTaxonomy", J: 'CLO\n1', K: 'CLO\n2', L: 'CLO\n3', M: 'CLO\n4', N: 'CLO\n5',
-            O: 'Estimated\nTime (min)'
-        };
+        const headerStyle = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FFFFFF' } };
+        const headerAlign = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
-        Object.entries(headers).forEach(([col, text]) => {
+        // Individual header cells
+        const simpleHeaders = { A: '', B: 'Question number', O: 'Estimated time required (in minutes) to solve the question paper by\nAverage student' };
+        Object.entries(simpleHeaders).forEach(([col, text]) => {
             const cell = ws.getCell(`${col}${headerRow}`);
             cell.value = text;
-            cell.font = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FFFFFF' } };
+            cell.font = headerStyle;
             cell.fill = headerFill;
-            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            cell.alignment = headerAlign;
             cell.border = thinBorder;
         });
+
+        // C: Lecture number header
+        ws.getCell(`C${headerRow}`).value = 'Lecture number\nof the topics in the Course Handout (Annexure C)';
+        ws.getCell(`C${headerRow}`).font = headerStyle;
+        ws.getCell(`C${headerRow}`).fill = headerFill;
+        ws.getCell(`C${headerRow}`).alignment = headerAlign;
+        ws.getCell(`C${headerRow}`).border = thinBorder;
+
+        // D6:H6 merged: Difficulty header
+        ws.mergeCells('D6:H6');
+        ws.getCell('D6').value = 'Level of difficulty on a scale of 1 (very easy) to 5 (extremely difficult)';
+        ws.getCell('D6').font = headerStyle;
+        ws.getCell('D6').fill = headerFill;
+        ws.getCell('D6').alignment = headerAlign;
+        ws.getCell('D6').border = thinBorder;
+
+        // I: Bloom's header
+        ws.getCell(`I${headerRow}`).value = "Indicative letter of Bloom\u2019s taxonomy (refer to table below)";
+        ws.getCell(`I${headerRow}`).font = headerStyle;
+        ws.getCell(`I${headerRow}`).fill = headerFill;
+        ws.getCell(`I${headerRow}`).alignment = headerAlign;
+        ws.getCell(`I${headerRow}`).border = thinBorder;
+
+        // J6:N6 merged: CLO header
+        ws.mergeCells('J6:N6');
+        ws.getCell('J6').value = 'Please indicate the level of CLO, this question best matches to';
+        ws.getCell('J6').font = headerStyle;
+        ws.getCell('J6').fill = headerFill;
+        ws.getCell('J6').alignment = headerAlign;
+        ws.getCell('J6').border = thinBorder;
+
+        // Q6:R10 merged: Sequence of lecture nos header (right sidebar area)
+        ws.mergeCells('Q6:R10');
+        ws.getCell('Q6').value = 'Sequence of lecture nos. (in ascending order)\nfrom where the questions have been framed';
+        ws.getCell('Q6').font = headerStyle;
+        ws.getCell('Q6').fill = headerFill;
+        ws.getCell('Q6').alignment = headerAlign;
+        ws.getCell('Q6').border = thinBorder;
+
         ws.getRow(headerRow).height = 45;
 
         // ============================================================
@@ -388,98 +441,205 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
             'SECTION-C': lightYellowFill
         };
 
-        // Counts for distributions
+        // Counts for percentage distributions
         const diffCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        const bloomCounts = { R: 0, U: 0, P: 0, N: 0, E: 0, C: 0 };
         const cloCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
         let totalEstTime = 0;
+
+        // Helper: apply cell styling for a question row
+        const styleCell = (cellRef, value, fill) => {
+            const cell = ws.getCell(cellRef);
+            cell.value = value;
+            cell.font = normalFont;
+            cell.border = thinBorder;
+            cell.alignment = { horizontal: 'center' };
+            cell.fill = fill;
+            return cell;
+        };
 
         sectionOrder.forEach(section => {
             const sectionQuestions = questions.filter(q => sectionMap[q.questionType] === section);
             if (sectionQuestions.length === 0) return;
 
-            sectionQuestions.forEach((q, idx) => {
+            const sectionFill = sectionColors[section];
+            const sectionStartRow = currentRow;
+
+            if (section === 'SECTION-A') {
+                // ====================================================
+                // MCQs: Group 5 per row (matching reference format)
+                // ====================================================
                 qNum++;
-                const row = ws.getRow(currentRow);
-                const sectionFill = sectionColors[section];
+                const mcqQuestionNumber = qNum; // This is question "1 (MCQ's)"
 
-                // A: Section name (merge for first question of section)
-                const cellA = ws.getCell(`A${currentRow}`);
-                cellA.value = idx === 0 ? section : '';
-                cellA.font = boldFont;
-                cellA.border = thinBorder;
-                cellA.fill = sectionFill;
+                // Gather all lecture numbers from MCQs for a combined range
+                const mcqLectures = sectionQuestions
+                    .map(q => q.lectureNumber || '')
+                    .filter(l => l !== '');
+                const combinedLecture = mcqLectures.length > 0 ? mcqLectures.join(', ') : '';
 
-                // B: Question number with type
-                const typeLabel = q.questionType === 'MCQ' ? `${qNum} (MCQ's)` : `${qNum}`;
-                ws.getCell(`B${currentRow}`).value = typeLabel;
-                ws.getCell(`B${currentRow}`).font = normalFont;
-                ws.getCell(`B${currentRow}`).border = thinBorder;
-                ws.getCell(`B${currentRow}`).alignment = { horizontal: 'center' };
-                ws.getCell(`B${currentRow}`).fill = sectionFill;
+                // Calculate total MCQ estimated time
+                const mcqTotalTime = sectionQuestions.reduce((sum, q) => sum + (q.estimatedTime || 1), 0);
+                totalEstTime += mcqTotalTime;
 
-                // C: Lecture number
-                ws.getCell(`C${currentRow}`).value = q.lectureNumber || '';
-                ws.getCell(`C${currentRow}`).font = normalFont;
-                ws.getCell(`C${currentRow}`).border = thinBorder;
-                ws.getCell(`C${currentRow}`).alignment = { horizontal: 'center' };
-                ws.getCell(`C${currentRow}`).fill = sectionFill;
+                // Track difficulty and CLO counts for MCQs
+                sectionQuestions.forEach(q => {
+                    const diff = q.difficultyLevel || 2;
+                    diffCounts[diff] = (diffCounts[diff] || 0) + (q.marks || 1);
+                    const clo = q.cloMapping || 1;
+                    cloCounts[clo] = (cloCounts[clo] || 0) + (q.marks || 1);
+                });
 
-                // D-H: Difficulty level (1-5) - put the marks value in the matching column
-                const diff = q.difficultyLevel || 2;
-                diffCounts[diff] = (diffCounts[diff] || 0) + (q.marks || 0);
-                for (let d = 1; d <= 5; d++) {
-                    const colLetter = String.fromCharCode(67 + d); // D=68, E=69...
-                    const cell = ws.getCell(`${colLetter}${currentRow}`);
-                    cell.value = d === diff ? q.marks : '';
-                    cell.font = normalFont;
-                    cell.border = thinBorder;
-                    cell.alignment = { horizontal: 'center' };
-                    cell.fill = sectionFill;
+                // Group MCQs 5 per row
+                const mcqRowCount = Math.ceil(sectionQuestions.length / 5);
+                for (let rowIdx = 0; rowIdx < mcqRowCount; rowIdx++) {
+                    const startMcq = rowIdx * 5;
+                    const rowMcqs = sectionQuestions.slice(startMcq, startMcq + 5);
+
+                    // A: Section name (only on first row)
+                    const cellA = ws.getCell(`A${currentRow}`);
+                    cellA.value = rowIdx === 0 ? section : '';
+                    cellA.font = boldFont;
+                    cellA.border = thinBorder;
+                    cellA.fill = sectionFill;
+
+                    // B: Question number (only on first row)
+                    const cellB = ws.getCell(`B${currentRow}`);
+                    cellB.value = rowIdx === 0 ? `${mcqQuestionNumber} (MCQ's)` : '';
+                    cellB.font = normalFont;
+                    cellB.border = thinBorder;
+                    cellB.alignment = { horizontal: 'center' };
+                    cellB.fill = sectionFill;
+
+                    // C: Lecture number (only on first row)
+                    const cellC = ws.getCell(`C${currentRow}`);
+                    cellC.value = rowIdx === 0 ? combinedLecture : '';
+                    cellC.font = normalFont;
+                    cellC.border = thinBorder;
+                    cellC.alignment = { horizontal: 'center' };
+                    cellC.fill = sectionFill;
+
+                    // D-H: Individual MCQ difficulty values (one per column)
+                    for (let col = 0; col < 5; col++) {
+                        const colLetter = String.fromCharCode(68 + col); // D=68, E=69, F=70, G=71, H=72
+                        const cell = ws.getCell(`${colLetter}${currentRow}`);
+                        if (col < rowMcqs.length) {
+                            cell.value = rowMcqs[col].difficultyLevel || 2;
+                        } else {
+                            cell.value = '';
+                        }
+                        cell.font = normalFont;
+                        cell.border = thinBorder;
+                        cell.alignment = { horizontal: 'center' };
+                        cell.fill = sectionFill;
+                    }
+
+                    // I: Bloom's taxonomy (only on first row)
+                    const cellI = ws.getCell(`I${currentRow}`);
+                    cellI.value = rowIdx === 0 ? (rowMcqs[0]?.bloomsTaxonomy || 'U') : '';
+                    cellI.font = normalFont;
+                    cellI.border = thinBorder;
+                    cellI.alignment = { horizontal: 'center' };
+                    cellI.fill = sectionFill;
+
+                    // J-N: Individual MCQ CLO values (one per column)
+                    for (let col = 0; col < 5; col++) {
+                        const colLetter = String.fromCharCode(74 + col); // J=74, K=75, L=76, M=77, N=78
+                        const cell = ws.getCell(`${colLetter}${currentRow}`);
+                        if (col < rowMcqs.length) {
+                            cell.value = rowMcqs[col].cloMapping || 1;
+                        } else {
+                            cell.value = '';
+                        }
+                        cell.font = normalFont;
+                        cell.border = thinBorder;
+                        cell.alignment = { horizontal: 'center' };
+                        cell.fill = sectionFill;
+                    }
+
+                    // O: Estimated time (only on first row, total for all MCQs)
+                    const cellO = ws.getCell(`O${currentRow}`);
+                    cellO.value = rowIdx === 0 ? mcqTotalTime : '';
+                    cellO.font = normalFont;
+                    cellO.border = thinBorder;
+                    cellO.alignment = { horizontal: 'center' };
+                    cellO.fill = sectionFill;
+
+                    currentRow++;
                 }
 
-                // I: Bloom's taxonomy
-                const bloom = q.bloomsTaxonomy || 'U';
-                bloomCounts[bloom] = (bloomCounts[bloom] || 0) + (q.marks || 0);
-                ws.getCell(`I${currentRow}`).value = bloom;
-                ws.getCell(`I${currentRow}`).font = normalFont;
-                ws.getCell(`I${currentRow}`).border = thinBorder;
-                ws.getCell(`I${currentRow}`).alignment = { horizontal: 'center' };
-                ws.getCell(`I${currentRow}`).fill = sectionFill;
-
-                // J-N: CLO mapping (1-5) - put marks in matching CLO column
-                const clo = q.cloMapping || 1;
-                cloCounts[clo] = (cloCounts[clo] || 0) + (q.marks || 0);
-                for (let c = 1; c <= 5; c++) {
-                    const colLetter = String.fromCharCode(73 + c); // J=74, K=75...
-                    const cell = ws.getCell(`${colLetter}${currentRow}`);
-                    cell.value = c === clo ? q.marks : '';
-                    cell.font = normalFont;
-                    cell.border = thinBorder;
-                    cell.alignment = { horizontal: 'center' };
-                    cell.fill = sectionFill;
+                // Merge MCQ cells across rows (matching reference: B, C, I, O merged)
+                if (mcqRowCount > 1) {
+                    ws.mergeCells(`A${sectionStartRow}:A${currentRow - 1}`);
+                    ws.mergeCells(`B${sectionStartRow}:B${currentRow - 1}`);
+                    ws.mergeCells(`C${sectionStartRow}:C${currentRow - 1}`);
+                    ws.mergeCells(`I${sectionStartRow}:I${currentRow - 1}`);
+                    ws.mergeCells(`O${sectionStartRow}:O${currentRow - 1}`);
                 }
 
-                // O: Estimated time
-                const estTime = q.estimatedTime || 5;
-                totalEstTime += estTime;
-                ws.getCell(`O${currentRow}`).value = estTime;
-                ws.getCell(`O${currentRow}`).font = normalFont;
-                ws.getCell(`O${currentRow}`).border = thinBorder;
-                ws.getCell(`O${currentRow}`).alignment = { horizontal: 'center' };
-                ws.getCell(`O${currentRow}`).fill = sectionFill;
+            } else {
+                // ====================================================
+                // Non-MCQ sections: One question per row
+                // ====================================================
+                sectionQuestions.forEach((q, idx) => {
+                    qNum++;
 
-                currentRow++;
-            });
+                    // A: Section name (only on first question of section)
+                    const cellA = ws.getCell(`A${currentRow}`);
+                    cellA.value = idx === 0 ? section : '';
+                    cellA.font = boldFont;
+                    cellA.border = thinBorder;
+                    cellA.fill = sectionFill;
 
-            // Merge section name cells
-            if (sectionQuestions.length > 1) {
-                const startMerge = currentRow - sectionQuestions.length;
-                ws.mergeCells(`A${startMerge}:A${currentRow - 1}`);
+                    // B: Question number
+                    styleCell(`B${currentRow}`, `${qNum}`, sectionFill);
+
+                    // C: Lecture number from the question
+                    styleCell(`C${currentRow}`, q.lectureNumber || '', sectionFill);
+
+                    // D-H: Merge and put difficulty NUMBER (matching reference)
+                    const diff = q.difficultyLevel || 2;
+                    diffCounts[diff] = (diffCounts[diff] || 0) + (q.marks || 0);
+                    ws.mergeCells(`D${currentRow}:H${currentRow}`);
+                    styleCell(`D${currentRow}`, diff, sectionFill);
+
+                    // I: Bloom's taxonomy letter
+                    const bloom = q.bloomsTaxonomy || 'U';
+                    styleCell(`I${currentRow}`, bloom, sectionFill);
+
+                    // J-N: Merge and put CLO NUMBER (matching reference)
+                    const clo = q.cloMapping || 1;
+                    cloCounts[clo] = (cloCounts[clo] || 0) + (q.marks || 0);
+                    ws.mergeCells(`J${currentRow}:N${currentRow}`);
+                    styleCell(`J${currentRow}`, clo, sectionFill);
+
+                    // O: Estimated time from DB
+                    const estTime = q.estimatedTime || 5;
+                    totalEstTime += estTime;
+                    styleCell(`O${currentRow}`, estTime, sectionFill);
+
+                    currentRow++;
+                });
+
+                // Merge section name cells
+                if (sectionQuestions.length > 1) {
+                    ws.mergeCells(`A${sectionStartRow}:A${currentRow - 1}`);
+                }
             }
         });
 
-        const questionsEndRow = currentRow - 1;
+        // ============================================================
+        // TOTAL ESTIMATED TIME ROW
+        // ============================================================
+        const timeRow = currentRow + 1;
+        ws.mergeCells(`B${timeRow}:N${timeRow + 1}`);
+        ws.getCell(`B${timeRow}`).value = `Total estimated time required to solve the question paper as per the assessment: ${totalEstTime} minutes`;
+        ws.getCell(`B${timeRow}`).font = boldFont;
+        ws.getCell(`B${timeRow}`).alignment = { wrapText: true, vertical: 'middle' };
+        ws.getCell(`B${timeRow}`).border = thinBorder;
+        ws.getCell(`O${timeRow}`).value = totalEstTime;
+        ws.getCell(`O${timeRow}`).font = { name: 'Calibri', size: 14, bold: true };
+        ws.getCell(`O${timeRow}`).border = thinBorder;
+        ws.getCell(`O${timeRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
 
         // ============================================================
         // DIFFICULTY % DISTRIBUTION SIDEBAR (right side, starting at row 12)
@@ -522,21 +682,7 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
         ws.getCell(`R${diffTotalRow}`).alignment = { horizontal: 'center' };
 
         // ============================================================
-        // TOTAL ESTIMATED TIME ROW
-        // ============================================================
-        const timeRow = currentRow + 1;
-        ws.mergeCells(`B${timeRow}:N${timeRow + 1}`);
-        ws.getCell(`B${timeRow}`).value = `Total estimated time required to solve the question paper as per the assessment: ${totalEstTime} minutes`;
-        ws.getCell(`B${timeRow}`).font = boldFont;
-        ws.getCell(`B${timeRow}`).alignment = { wrapText: true, vertical: 'middle' };
-        ws.getCell(`B${timeRow}`).border = thinBorder;
-        ws.getCell(`O${timeRow}`).value = totalEstTime;
-        ws.getCell(`O${timeRow}`).font = { name: 'Calibri', size: 14, bold: true };
-        ws.getCell(`O${timeRow}`).border = thinBorder;
-        ws.getCell(`O${timeRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
-
-        // ============================================================
-        // CLO DESCRIPTIONS & % DISTRIBUTION (sidebar)
+        // CLO % DISTRIBUTION SIDEBAR
         // ============================================================
         const cloSidebarRow = diffTotalRow + 2;
         ws.getCell(`Q${cloSidebarRow}`).value = 'Percentage distribution pertaining to different CLOs';
@@ -584,7 +730,7 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
         ws.getCell(`B${cloDescRow}`).font = { name: 'Calibri', size: 10, italic: true };
         ws.getCell(`B${cloDescRow}`).alignment = { wrapText: true, vertical: 'middle' };
 
-        // CLO rows (numbered 1-5)
+        // CLO rows (numbered 1-5, using real descriptions from CHO if available)
         for (let c = 1; c <= 5; c++) {
             const r = cloDescRow + 1 + c;
             ws.getCell(`B${r}`).value = c;
@@ -592,7 +738,9 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
             ws.getCell(`B${r}`).border = thinBorder;
             ws.getCell(`B${r}`).alignment = { horizontal: 'center' };
             ws.mergeCells(`C${r}:O${r}`);
-            ws.getCell(`C${r}`).value = `CLO-${c} description`;
+            const cloKey = `CLO${String(c).padStart(2, '0')}`;
+            const cloDesc = cloDefinitions[cloKey] || `CLO-${c} description`;
+            ws.getCell(`C${r}`).value = cloDesc;
             ws.getCell(`C${r}`).font = normalFont;
             ws.getCell(`C${r}`).border = thinBorder;
         }

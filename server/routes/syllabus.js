@@ -102,10 +102,12 @@ router.post('/upload-cho', auth, upload.single('file'), async (req, res) => {
         if (map) {
             map.mappings = mappings;
             map.subject = subject; // Update case if needed
+            map.cloDefinitions = parsed.clo_definitions || {};
         } else {
             map = new SyllabusMap({
                 subject,
                 mappings,
+                cloDefinitions: parsed.clo_definitions || {},
                 createdBy: req.user._id
             });
         }
