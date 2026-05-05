@@ -616,7 +616,7 @@ Question: Define a linked list.`}
                                                         }}
                                                     />
                                                 )}
-                                                <span>{q.text.substring(0, 70)}{q.text.length > 70 ? '...' : ''}</span>
+                                                <span>{(q.text || '').substring(0, 70)}{(q.text || '').length > 70 ? '...' : ''}</span>
                                             </div>
                                         </td>
                                         <td>
