@@ -434,7 +434,7 @@ router.get('/stats/overview', auth, async (req, res) => {
     try {
         const total = await Question.countDocuments();
         const byDifficulty = await Question.aggregate([
-            { $group: { _id: '$difficulty', count: { $sum: 1 } } }
+            { $group: { _id: '$difficultyLevel', count: { $sum: 1 } } }
         ]);
         const byType = await Question.aggregate([
             { $group: { _id: '$questionType', count: { $sum: 1 } } }

@@ -16,8 +16,18 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: function() { return this.authProvider !== 'google'; },
         minlength: 6
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     role: {
         type: String,
@@ -45,8 +55,8 @@ userSchema.pre('save', async function (next) {
         this.memberId = `MEM-${String(count + 1).padStart(3, '0')}`;
     }
 
-    // Hash password before saving
-    if (this.isModified('password')) {
+    // Hash password before saving (only if password exists — Google users don't have one)
+    if (this.password && this.isModified('password')) {
         this.password = await bcrypt.hash(this.password, 10);
     }
     next();

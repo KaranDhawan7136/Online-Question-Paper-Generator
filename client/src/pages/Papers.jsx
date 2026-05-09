@@ -211,27 +211,34 @@ const Papers = () => {
         try {
             if (type === 'summary') {
                 const response = await papersAPI.downloadSummaryExcel(paper._id);
-                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const blob = new Blob([response.data], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
                 link.setAttribute('download', `${paper.title.replace(/\s/g, '_')}_Summary_Sheet.xlsx`);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
+                window.URL.revokeObjectURL(url);
                 toast.success('Summary Excel downloaded!');
             } else {
                 const response = await papersAPI.downloadPDF(paper._id, type);
-                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const blob = new Blob([response.data], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
                 link.setAttribute('download', `${paper.title.replace(/\s/g, '_')}_${type}.pdf`);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
+                window.URL.revokeObjectURL(url);
                 toast.success('PDF downloaded!');
             }
         } catch (error) {
-            toast.error('Download failed');
+            const msg = error.response?.data?.error || error.response?.statusText || 'Download failed';
+            toast.error(msg);
         }
     };
 

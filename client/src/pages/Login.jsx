@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const Login = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -13,8 +15,68 @@ const Login = () => {
         role: 'faculty'
     });
 
-    const { login, register } = useAuth();
+    const { login, register, googleLogin } = useAuth();
     const navigate = useNavigate();
+    const googleBtnRef = useRef(null);
+
+    const handleGoogleResponse = useCallback(async (response) => {
+        setLoading(true);
+        try {
+            const res = await googleLogin(response.credential);
+            if (res.requiresApproval) {
+                toast.success('Registration successful! Please wait for Admin approval before logging in.', { duration: 5000 });
+            } else if (res.user) {
+                toast.success('Welcome!');
+                navigate('/');
+            }
+        } catch (error) {
+            const msg = error.response?.data?.error || 'Google sign-in failed';
+            if (error.response?.data?.requiresApproval) {
+                toast.success('Your account is pending admin approval.', { duration: 5000 });
+            } else {
+                toast.error(msg);
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [googleLogin, navigate]);
+
+    useEffect(() => {
+        if (!GOOGLE_CLIENT_ID) return;
+
+        const initGoogle = () => {
+            if (window.google?.accounts?.id) {
+                window.google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleResponse,
+                    auto_select: false
+                });
+                if (googleBtnRef.current) {
+                    window.google.accounts.id.renderButton(googleBtnRef.current, {
+                        theme: 'outline',
+                        size: 'large',
+                        width: '100%',
+                        text: 'signin_with',
+                        shape: 'rectangular',
+                        logo_alignment: 'center'
+                    });
+                }
+            }
+        };
+
+        // GSI script may load async — retry if not ready
+        if (window.google?.accounts?.id) {
+            initGoogle();
+        } else {
+            const interval = setInterval(() => {
+                if (window.google?.accounts?.id) {
+                    clearInterval(interval);
+                    initGoogle();
+                }
+            }, 200);
+            return () => clearInterval(interval);
+        }
+    }, [handleGoogleResponse]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,9 +94,10 @@ const Login = () => {
             } else {
                 const res = await register(formData);
                 if (res.requiresApproval) {
-                    toast.success('Registration successful. Please wait for Admin approval.');
-                    // Do not navigate, let them see the message
-                    setFormData({ ...formData, role: 'faculty' }); // Reset form slightly
+                    toast.success('Registration successful! Please wait for Admin approval before logging in.', { duration: 5000 });
+                    // Switch to login view so user is directed to sign in
+                    setIsLogin(true);
+                    setFormData({ name: '', email: formData.email, password: '', role: 'faculty', accessCode: '' });
                 } else {
                     toast.success('Account created successfully!');
                     navigate('/');
@@ -57,6 +120,33 @@ const Login = () => {
                         {isLogin ? 'Sign in to your account' : 'Create a new account'}
                     </p>
                 </div>
+
+                {/* Google Sign-In Button */}
+                {GOOGLE_CLIENT_ID && (
+                    <>
+                        <div
+                            ref={googleBtnRef}
+                            id="google-signin-btn"
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                marginBottom: '8px'
+                            }}
+                        ></div>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            margin: '16px 0',
+                            color: 'var(--gray-400)',
+                            fontSize: '13px'
+                        }}>
+                            <div style={{ flex: 1, height: '1px', background: 'var(--gray-200)' }}></div>
+                            <span>or</span>
+                            <div style={{ flex: 1, height: '1px', background: 'var(--gray-200)' }}></div>
+                        </div>
+                    </>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     {!isLogin && (

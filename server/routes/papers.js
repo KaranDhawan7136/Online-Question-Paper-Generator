@@ -199,6 +199,10 @@ router.get('/:id', auth, async (req, res) => {
         if (!paper) {
             return res.status(404).json({ error: 'Paper not found' });
         }
+        // Ownership check: non-admin users can only access their own papers
+        if (req.user.role !== 'admin' && paper.createdBy?.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Access denied. You can only view your own papers.' });
+        }
         res.json(paper);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -212,22 +216,30 @@ router.post('/:id/pdf', auth, async (req, res) => {
         if (!paper) {
             return res.status(404).json({ error: 'Paper not found' });
         }
+        // Ownership check
+        if (req.user.role !== 'admin' && paper.createdBy?.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Access denied. You can only download your own papers.' });
+        }
 
         // Call Python service for PDF generation
         const pythonResponse = await axios.post(
             `${process.env.PYTHON_SERVICE_URL}/create-pdf`,
             {
                 paper: paper.toObject(),
-                type: req.body.type || 'question_paper' // 'question_paper' or 'summary'
+                type: req.body.type || 'question_paper'
             },
             { responseType: 'arraybuffer' }
         );
 
+        const filename = `${paper.title.replace(/\s/g, '_')}.pdf`;
         res.set({
             'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${paper.title.replace(/\s/g, '_')}.pdf"`
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': pythonResponse.data.length,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
         });
-        res.send(pythonResponse.data);
+        res.send(Buffer.from(pythonResponse.data));
     } catch (error) {
         console.error('PDF generation error:', error.message);
         res.status(500).json({ error: error.message });
@@ -240,6 +252,10 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
         const paper = await Paper.findById(req.params.id).populate('questions');
         if (!paper) {
             return res.status(404).json({ error: 'Paper not found' });
+        }
+        // Ownership check
+        if (req.user.role !== 'admin' && paper.createdBy?.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Access denied. You can only download your own papers.' });
         }
 
         const questions = paper.questions || [];
@@ -814,7 +830,9 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
         res.set({
             'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition': `attachment; filename="${filename}"`,
-            'Content-Length': buffer.length
+            'Content-Length': buffer.length,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
         });
         res.send(Buffer.from(buffer));
 

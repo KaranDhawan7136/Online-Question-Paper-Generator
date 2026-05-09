@@ -289,23 +289,7 @@ const QuestionBank = () => {
         e.target.value = '';
     };
 
-    const handleWordUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        try {
-            const res = await questionsAPI.uploadWord(uploadFormData);
-            toast.success(`${res.data.count} questions imported from Word!`);
-            if (res.data.errors && res.data.errors.length > 0) {
-                toast(`${res.data.errors.length} blocks had issues`, { icon: '⚠️' });
-            }
-            fetchQuestions();
-        } catch (error) {
-            toast.error(error.response?.data?.error || 'Word upload failed');
-        }
-        e.target.value = '';
-    };
+
 
     const handleQBankUpload = async (e) => {
         e.preventDefault();
@@ -390,10 +374,7 @@ const QuestionBank = () => {
                         📤 Upload CSV
                         <input type="file" accept=".csv" onChange={handleCSVUpload} style={{ display: 'none' }} />
                     </label>
-                    <label className="btn btn-secondary" title="Upload questions from a Word document (.docx)" style={{ background: '#2b5797', color: '#fff', border: 'none' }}>
-                        📄 Upload Word
-                        <input type="file" accept=".docx" onChange={handleWordUpload} style={{ display: 'none' }} />
-                    </label>
+
                     <button className="btn btn-secondary" onClick={() => setShowFormatGuide(!showFormatGuide)} style={{ fontSize: '14px' }}>
                         {showFormatGuide ? '✕ Hide Guide' : 'ℹ️ Format Guide'}
                     </button>
@@ -413,7 +394,7 @@ const QuestionBank = () => {
                 <div className="card" style={{ marginBottom: '24px', background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
                     <h3 style={{ marginBottom: '16px', color: '#a5b4fc', fontSize: '18px' }}>📋 Upload Format Guide</h3>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                    <div>
                         {/* CSV Format */}
                         <div>
                             <h4 style={{ color: '#34d399', marginBottom: '12px', fontSize: '15px' }}>📊 CSV Format</h4>
@@ -439,42 +420,6 @@ const QuestionBank = () => {
                             </div>
                             <div style={{ marginTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
                                 💡 Click <strong style={{ color: '#34d399' }}>"📥 CSV Template"</strong> to download a sample file
-                            </div>
-                        </div>
-
-                        {/* Word Format */}
-                        <div>
-                            <h4 style={{ color: '#60a5fa', marginBottom: '12px', fontSize: '15px' }}>📄 Word (.docx) Format</h4>
-                            <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '14px', fontSize: '12px', lineHeight: '1.7' }}>
-                                <div style={{ color: '#e2e8f0', marginBottom: '8px', fontWeight: 'bold' }}>Each question uses "Label: Value" format.</div>
-                                <div style={{ color: '#e2e8f0', marginBottom: '6px', fontWeight: 'bold' }}>Separate questions with <code style={{ color: '#34d399' }}>---</code></div>
-                                <pre style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '6px', padding: '10px', color: '#cbd5e1', fontSize: '11px', overflowX: 'auto', margin: '8px 0', whiteSpace: 'pre-wrap' }}>
-{`Subject: Data Structures, Algorithms
-Topic: Arrays
-Type: MCQ
-Marks: 1
-Difficulty: 2
-Time: 2
-Blooms: U
-CLO: 1
-Question: What is the time complexity?
-Options: O(1) | O(n) | O(log n) | O(n²)
-Answer: O(1)
----
-Subject: Data Structures
-Topic: Linked Lists
-Type: 2 Mark
-Marks: 2
-Question: Define a linked list.`}
-                                </pre>
-                                <div style={{ color: '#e2e8f0', marginTop: '6px', fontWeight: 'bold' }}>Required Labels:</div>
-                                <div style={{ color: '#94a3b8' }}>
-                                    <code style={{ color: '#f472b6' }}>Question</code>, <code style={{ color: '#f472b6' }}>Subject</code>, <code style={{ color: '#f472b6' }}>Type</code>, <code style={{ color: '#f472b6' }}>Topic</code>
-                                </div>
-                                <div style={{ color: '#fbbf24', marginTop: '8px', fontSize: '11px' }}>
-                                    💡 Use commas to add multiple subjects/topics. <br/>
-                                    <span style={{ color: '#34d399' }}>✨ Missing fields like Unit and Bloom's will be auto-filled if possible!</span>
-                                </div>
                             </div>
                         </div>
                     </div>

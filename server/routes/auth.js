@@ -2,8 +2,10 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
+const { OAuth2Client } = require('google-auth-library');
 
 const router = express.Router();
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Register
 router.post('/register', async (req, res) => {
@@ -69,17 +71,14 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Check for Approval - Auto-fix if missing or false
-        // This ensures legacy users and anyone stuck can login
-        if (user.isApproved !== true) {
-            console.log(`[System] Auto-approving user ${user.email} on login.`);
-            user.isApproved = true;
-            await user.save();
-        }
-
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Block unapproved users from logging in
+        if (!user.isApproved) {
+            return res.status(403).json({ error: 'Your account is pending admin approval. Please contact the administrator.' });
         }
 
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -179,6 +178,85 @@ router.post('/emergency-reset', async (req, res) => {
         res.json({ message: `Password for ${email} has been reset successfully.` });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Google OAuth Login
+router.post('/google', async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) {
+            return res.status(400).json({ error: 'Google credential is required' });
+        }
+
+        // Verify the Google ID token
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+        const payload = ticket.getPayload();
+        const { sub: googleId, email, name, picture } = payload;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Google account does not have an email address' });
+        }
+
+        // Check if user already exists (by googleId or email)
+        let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+        if (user) {
+            // Existing user — link Google account if not already linked
+            if (!user.googleId) {
+                user.googleId = googleId;
+                user.authProvider = user.authProvider === 'local' ? 'local' : 'google';
+                await user.save();
+            }
+
+            // Check approval
+            if (!user.isApproved) {
+                return res.status(403).json({ 
+                    error: 'Your account is pending admin approval. Please contact the administrator.',
+                    requiresApproval: true
+                });
+            }
+
+            // Issue JWT
+            const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            return res.json({
+                message: 'Login successful',
+                token,
+                user: { id: user._id, name: user.name, email: user.email, role: user.role, memberId: user.memberId }
+            });
+        }
+
+        // New user — create account (requires admin approval)
+        const isFirstUser = (await User.countDocuments()) === 0;
+        const newUser = new User({
+            name: name || email.split('@')[0],
+            email,
+            googleId,
+            authProvider: 'google',
+            role: isFirstUser ? 'admin' : 'faculty',
+            isApproved: isFirstUser
+        });
+        await newUser.save();
+
+        if (isFirstUser) {
+            const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            return res.status(201).json({
+                message: 'Account created successfully',
+                token,
+                user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role, memberId: newUser.memberId }
+            });
+        }
+
+        res.status(201).json({
+            message: 'Registration successful. Please wait for Admin approval before logging in.',
+            requiresApproval: true
+        });
+    } catch (error) {
+        console.error('Google auth error:', error.message);
+        res.status(500).json({ error: 'Google authentication failed. Please try again.' });
     }
 });
 

@@ -55,6 +55,19 @@ export const AuthProvider = ({ children }) => {
         return { user, requiresApproval };
     };
 
+    const googleLogin = async (credential) => {
+        const response = await authAPI.googleLogin(credential);
+        const { token, user, requiresApproval } = response.data;
+
+        if (token && user) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+            setUser(user);
+        }
+
+        return { user, requiresApproval };
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -62,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, googleLogin, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

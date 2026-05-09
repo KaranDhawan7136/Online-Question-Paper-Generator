@@ -31,3 +31,7 @@ Thumbs.db
 *.tmp
 *.temp
 nul
+~$*
+
+# Google credentials (NEVER commit)
+client_secret_*.json

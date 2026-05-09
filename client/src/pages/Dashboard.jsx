@@ -79,7 +79,7 @@ const Dashboard = () => {
                 <div className="stat-card">
                     <div className="stat-icon danger">🎯</div>
                     <div>
-                        <div className="stat-value">{stats?.byDifficulty?.find(d => d._id === 'Hard')?.count || 0}</div>
+                        <div className="stat-value">{(stats?.byDifficulty?.filter(d => d._id >= 4).reduce((sum, d) => sum + d.count, 0)) || 0}</div>
                         <div className="stat-label">Hard Questions</div>
                     </div>
                 </div>
