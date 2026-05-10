@@ -72,9 +72,9 @@ export const papersAPI = {
     getAll: () => api.get('/papers'),
     getById: (id) => api.get(`/papers/${id}`),
     downloadPDF: (id, type = 'question_paper') =>
-        api.post(`/papers/${id}/pdf`, { type }, { responseType: 'blob' }),
+        api.post(`/papers/${id}/pdf`, { type }, { responseType: 'blob', timeout: 90000 }),
     downloadSummaryExcel: (id) =>
-        api.post(`/papers/${id}/summary-excel`, {}, { responseType: 'blob' }),
+        api.post(`/papers/${id}/summary-excel`, {}, { responseType: 'blob', timeout: 60000 }),
     delete: (id) => api.delete(`/papers/${id}`)
 };
 

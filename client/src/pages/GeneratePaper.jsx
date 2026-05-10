@@ -345,7 +345,18 @@ const GeneratePaper = () => {
                 toast.success('PDF downloaded!');
             }
         } catch (error) {
-            toast.error('Download failed');
+            // When responseType is 'blob', error data also comes as a Blob — must decode it
+            let msg = 'Download failed';
+            try {
+                if (error.response?.data instanceof Blob) {
+                    const text = await error.response.data.text();
+                    const json = JSON.parse(text);
+                    msg = json.error || msg;
+                } else {
+                    msg = error.response?.data?.error || error.response?.statusText || msg;
+                }
+            } catch (_) {}
+            toast.error(msg);
         }
     };
 

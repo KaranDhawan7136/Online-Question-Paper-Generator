@@ -8,6 +8,49 @@ const { auth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Helper: Wake AI service from Render free-tier sleep, then make the actual request
+async function wakeAndCallAIService(url, data, options = {}) {
+    const baseURL = process.env.PYTHON_SERVICE_URL;
+    const maxRetries = options.retries || 2;
+    const timeout = options.timeout || 60000; // 60s default
+
+    // Step 1: Ping /health to wake the service (ignore errors)
+    try {
+        await axios.get(`${baseURL}/health`, { timeout: 15000 });
+        console.log('[AI Service] Health check OK');
+    } catch (e) {
+        console.log(`[AI Service] Health ping sent (cold start likely): ${e.message}`);
+        // Wait a bit for the service to spin up
+        await new Promise(r => setTimeout(r, 5000));
+    }
+
+    // Step 2: Make the actual request with retries
+    let lastError;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[AI Service] Request attempt ${attempt}/${maxRetries} to ${url}`);
+            const response = await axios.post(url, data, {
+                ...options,
+                timeout,
+            });
+            return response;
+        } catch (err) {
+            lastError = err;
+            console.error(`[AI Service] Attempt ${attempt} failed: ${err.message}`);
+            if (attempt < maxRetries) {
+                const wait = attempt * 5000;
+                console.log(`[AI Service] Retrying in ${wait/1000}s...`);
+                await new Promise(r => setTimeout(r, wait));
+                // Re-ping health before retry
+                try {
+                    await axios.get(`${baseURL}/health`, { timeout: 10000 });
+                } catch (_) {}
+            }
+        }
+    }
+    throw lastError;
+}
+
 // Generate paper
 router.post('/generate', auth, async (req, res) => {
     try {
@@ -221,28 +264,54 @@ router.post('/:id/pdf', auth, async (req, res) => {
             return res.status(403).json({ error: 'Access denied. You can only download your own papers.' });
         }
 
-        // Call Python service for PDF generation
-        const pythonResponse = await axios.post(
-            `${process.env.PYTHON_SERVICE_URL}/create-pdf`,
-            {
-                paper: paper.toObject(),
-                type: req.body.type || 'question_paper'
-            },
-            { responseType: 'arraybuffer' }
-        );
+        let pdfBuffer;
+        let generatedBy = 'python';
+
+        // Try Python AI service first (with wake-up and retry)
+        try {
+            const pythonResponse = await wakeAndCallAIService(
+                `${process.env.PYTHON_SERVICE_URL}/create-pdf`,
+                {
+                    paper: paper.toObject(),
+                    type: req.body.type || 'question_paper'
+                },
+                { responseType: 'arraybuffer', timeout: 60000, retries: 2 }
+            );
+            pdfBuffer = Buffer.from(pythonResponse.data);
+            console.log('[PDF] Generated via Python AI service');
+        } catch (pyErr) {
+            // Fallback to Node.js PDF generator
+            console.log(`[PDF] Python service failed (${pyErr.message}), using Node.js fallback...`);
+            try {
+                const { generatePaperPDF } = require('../utils/pdfGenerator');
+                pdfBuffer = await generatePaperPDF(paper.toObject());
+                generatedBy = 'node-fallback';
+                console.log('[PDF] Generated via Node.js fallback (PDFKit)');
+            } catch (nodeErr) {
+                console.error('[PDF] Node.js fallback also failed:', nodeErr.message);
+                throw nodeErr;
+            }
+        }
 
         const filename = `${paper.title.replace(/\s/g, '_')}.pdf`;
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="${filename}"`,
-            'Content-Length': pythonResponse.data.length,
+            'Content-Length': pdfBuffer.length,
+            'X-Generated-By': generatedBy,
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
         });
-        res.send(Buffer.from(pythonResponse.data));
+        res.send(pdfBuffer);
     } catch (error) {
         console.error('PDF generation error:', error.message);
-        res.status(500).json({ error: error.message });
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+            res.status(503).json({ error: 'PDF service is currently unavailable. Please try again in 30 seconds.' });
+        } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+            res.status(504).json({ error: 'PDF generation timed out. The service may be starting up — please try again in 30 seconds.' });
+        } else {
+            res.status(500).json({ error: error.message || 'PDF generation failed' });
+        }
     }
 });
 
@@ -838,7 +907,11 @@ router.post('/:id/summary-excel', auth, async (req, res) => {
 
     } catch (error) {
         console.error('Excel summary generation error:', error.message);
-        res.status(500).json({ error: error.message });
+        if (error.message?.includes('merge')) {
+            res.status(500).json({ error: 'Summary sheet generation failed due to a cell merge conflict. This usually means the paper has an unusual question layout. Please try regenerating the paper.' });
+        } else {
+            res.status(500).json({ error: error.message || 'Summary sheet generation failed' });
+        }
     }
 });
 
