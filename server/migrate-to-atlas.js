@@ -6,7 +6,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 
 const LOCAL_URI = 'mongodb://127.0.0.1:27017';
-const ATLAS_URI = 'mongodb+srv://dhawankaran760_db_user:Kirpa123@qp-generator.jtd6gln.mongodb.net/qp-generator?retryWrites=true&w=majority&appName=QP-Generator';
+const ATLAS_URI = process.env.ATLAS_URI || 'YOUR_ATLAS_URI_HERE';
 
 async function migrate() {
     // Connect to both databases
