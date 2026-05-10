@@ -163,7 +163,7 @@ router.post('/emergency-reset', async (req, res) => {
         const { email, newPassword, secretKey } = req.body;
 
         // Simple protection
-        if (secretKey !== 'EMERGENCY_RESET_2024') {
+        if (secretKey !== (process.env.EMERGENCY_RESET_KEY || 'CHANGE_ME')) {
             return res.status(403).json({ error: 'Invalid secret key' });
         }
 

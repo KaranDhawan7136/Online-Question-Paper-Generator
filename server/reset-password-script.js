@@ -2,8 +2,13 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 
-const EMAIL = 'dhawan0685@gmail.com';
-const NEW_PASSWORD = 'Kirpa@123';
+const EMAIL = process.argv[2];
+const NEW_PASSWORD = process.argv[3];
+
+if (!EMAIL || !NEW_PASSWORD) {
+    console.log('Usage: node reset-password-script.js <email> <new_password>');
+    process.exit(1);
+}
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
