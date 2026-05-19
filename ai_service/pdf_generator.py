@@ -269,37 +269,39 @@ class PDFGenerator:
             questions_by_type[q.get('questionType', '2 Mark')].append(q)
         
         section_order = ['MCQ', '2 Mark', '3 Mark', '5 Mark', '10 Mark']
-        section_config = {
-            'MCQ': {
-                'name': 'Section-A',
-                'note': '(All Questions are Compulsory. Each question carries 01 mark)'
-            },
-            '2 Mark': {
-                'name': 'Section-B',
-                'note': '(Short Answer Questions. Each question carries 02 marks)'
-            },
-            '3 Mark': {
-                'name': 'Section-B', 
-                'note': '(Attempt any 5 questions, each question carries 03 marks)'
-            },
-            '5 Mark': {
-                'name': 'Section-C',
-                'note': '(Attempt any 2 questions, each question carries 5 marks, subparts (if any) carry equal weightage)'
-            },
-            '10 Mark': {
-                'name': 'Section-D',
-                'note': '(Attempt any one question, each question carries 10 marks, subparts (if any) carry equal weightage)'
-            }
+        section_names = {
+            'MCQ': 'Section-A',
+            '2 Mark': 'Section-B',
+            '3 Mark': 'Section-B',
+            '5 Mark': 'Section-C',
+            '10 Mark': 'Section-D'
         }
+        mark_values = {'MCQ': 1, '2 Mark': 2, '3 Mark': 3, '5 Mark': 5, '10 Mark': 10}
+        
+        # Read optionalConfig for dynamic section notes
+        optional_config = self.paper.get('optionalConfig', {})
         
         question_num = 1
         for qtype in section_order:
             if qtype in questions_by_type and len(questions_by_type[qtype]) > 0:
-                config = section_config.get(qtype, {'name': 'Section', 'note': ''})
+                section_name = section_names.get(qtype, 'Section')
+                marks = mark_values.get(qtype, 0)
+                total_q = len(questions_by_type[qtype])
+                
+                # Dynamic section note matching web preview logic
+                type_config = optional_config.get(qtype, {}) if isinstance(optional_config, dict) else {}
+                attempt_req = type_config.get('attemptRequired', 0) if isinstance(type_config, dict) else 0
+                attempt = attempt_req if (attempt_req and attempt_req > 0 and attempt_req < total_q) else total_q
+                
+                if attempt < total_q:
+                    section_note = f'(Attempt any {attempt} questions, each question carries {str(marks).zfill(2)} marks)'
+                else:
+                    mark_word = 'mark' if marks == 1 else 'marks'
+                    section_note = f'(All Questions are Compulsory. Each question carries {str(marks).zfill(2)} {mark_word})'
                 
                 # Section header
-                elements.append(Paragraph(f"<b><u>{config['name']}</u></b>", self.styles['SectionHeader']))
-                elements.append(Paragraph(f"<i>{config['note']}</i>", self.styles['SectionNote']))
+                elements.append(Paragraph(f"<b><u>{section_name}</u></b>", self.styles['SectionHeader']))
+                elements.append(Paragraph(f"<i>{section_note}</i>", self.styles['SectionNote']))
                 
                 for q in questions_by_type[qtype]:
                     text = q.get('text', '')

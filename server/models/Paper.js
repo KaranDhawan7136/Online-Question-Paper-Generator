@@ -78,6 +78,11 @@ const paperSchema = new mongoose.Schema({
             default: ['MCQ', '2 Mark', '5 Mark', '10 Mark']
         }
     },
+    // Optional questions config: for each section type, how many total and how many to attempt
+    optionalConfig: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+    },
     questions: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Question'

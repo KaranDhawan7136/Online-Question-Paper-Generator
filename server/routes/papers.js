@@ -78,7 +78,8 @@ router.post('/generate', auth, async (req, res) => {
             difficultyDistribution,
             questionTypes,
             questionCounts, // NEW: Exact counts per question type
-            unitConfig // Array of { name, topics, percentage }
+            unitConfig, // Array of { name, topics, percentage }
+            optionalConfig // Per-section attempt config: { 'MCQ': { attemptRequired: 5 }, ... }
         } = req.body;
 
         // Fetch questions from DB based on subject and question types
@@ -200,6 +201,7 @@ router.post('/generate', auth, async (req, res) => {
                 difficultyDistribution: difficultyDistribution || { Easy: 30, Medium: 50, Hard: 20 },
                 questionTypes: questionTypes || ['MCQ', '2 Mark', '5 Mark', '10 Mark']
             },
+            optionalConfig: optionalConfig || {},
             questions: questionIds,
             createdBy: req.user._id
         });

@@ -87,6 +87,7 @@ async function generatePaperPDF(paper) {
 
             // ===== QUESTIONS BY SECTION =====
             const questions = paper.questions || [];
+            const optionalConfig = paper.optionalConfig || {};
             const byType = {};
             questions.forEach(q => {
                 const type = q.questionType || 'MCQ';
@@ -95,13 +96,14 @@ async function generatePaperPDF(paper) {
             });
 
             const sectionOrder = ['MCQ', '2 Mark', '3 Mark', '5 Mark', '10 Mark'];
-            const sectionConfig = {
-                'MCQ':    { name: 'Section-A', note: '(All Questions are Compulsory. Each question carries 01 mark)' },
-                '2 Mark': { name: 'Section-B', note: '(Short Answer Questions. Each question carries 02 marks)' },
-                '3 Mark': { name: 'Section-B', note: '(Attempt any 5 questions, each question carries 03 marks)' },
-                '5 Mark': { name: 'Section-C', note: '(Attempt any 2 questions, each question carries 5 marks)' },
-                '10 Mark':{ name: 'Section-D', note: '(Attempt any one question, each question carries 10 marks)' }
+            const sectionNames = {
+                'MCQ': 'Section-A',
+                '2 Mark': 'Section-B',
+                '3 Mark': 'Section-B',
+                '5 Mark': 'Section-C',
+                '10 Mark': 'Section-D'
             };
+            const markValues = { 'MCQ': 1, '2 Mark': 2, '3 Mark': 3, '5 Mark': 5, '10 Mark': 10 };
 
             let questionNum = 1;
 
@@ -109,7 +111,19 @@ async function generatePaperPDF(paper) {
                 const sectionQs = byType[qtype];
                 if (!sectionQs || sectionQs.length === 0) return;
 
-                const config = sectionConfig[qtype] || { name: 'Section', note: '' };
+                const sectionName = sectionNames[qtype] || 'Section';
+                const marks = markValues[qtype] || 0;
+                const totalQ = sectionQs.length;
+
+                // Dynamic section note matching web preview logic
+                const attemptReq = optionalConfig[qtype]?.attemptRequired;
+                const attempt = (attemptReq && attemptReq > 0 && attemptReq < totalQ) ? attemptReq : totalQ;
+                let sectionNote;
+                if (attempt < totalQ) {
+                    sectionNote = `(Attempt any ${attempt} questions, each question carries ${marks.toString().padStart(2, '0')} marks)`;
+                } else {
+                    sectionNote = `(All Questions are Compulsory. Each question carries ${marks.toString().padStart(2, '0')} ${marks === 1 ? 'mark' : 'marks'})`;
+                }
 
                 // Check if we need a new page (if less than 100pt remaining)
                 if (doc.y > doc.page.height - 100) {
@@ -119,9 +133,9 @@ async function generatePaperPDF(paper) {
                 // Section header
                 doc.moveDown(0.5);
                 doc.font('Helvetica-Bold').fontSize(11)
-                    .text(config.name, { align: 'center', underline: true });
+                    .text(sectionName, { align: 'center', underline: true });
                 doc.font('Helvetica-Oblique').fontSize(9.5)
-                    .text(config.note, { align: 'center' });
+                    .text(sectionNote, { align: 'center' });
                 doc.moveDown(0.4);
 
                 sectionQs.forEach(q => {
